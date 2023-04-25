@@ -6,7 +6,7 @@ This contains all my dotfiles.
 
 + nvim config
 + keyboard layouts for macOS and Windows, Linux TBA
-+ ZSH and PowerShell setup (latter TBA)
++ ZSH and PowerShell setup (latter TBA) 
 
 # Neovim setup
 Requires [Neovim](https://neovim.io/) (>=0.8)
@@ -19,3 +19,6 @@ Requires [Neovim](https://neovim.io/) (>=0.8)
 + [nvim-telescope/telescope.nvim](https://github.com/nvim-telescope/telescope.nvim)
 
 # ZSH setup
+
++ [oh my zsh](https://ohmyz.sh/)
++ [Powerlevel10k](https://github.com/romkatv/powerlevel10k)
