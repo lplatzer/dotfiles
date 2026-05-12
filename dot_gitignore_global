@@ -1,0 +1,45 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# IDE / editors
+.idea/
+.vscode/
+*.suo
+*.user
+*.swp
+*.swo
+.nova/
+.zed/
+
+# Build artifacts
+node_modules/
+dist/
+build/
+out/
+.next/
+.nuxt/
+target/
+*.class
+*.o
+*.a
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+
+# OS
+Thumbs.db
+ehthumbs.db
+
+# Misc
+*.orig

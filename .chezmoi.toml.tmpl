@@ -1,0 +1,6 @@
+[data]
+    name         = {{ promptStringOnce . "name" "Full name" | quote }}
+    email        = {{ promptStringOnce . "email" "Personal email (default git identity)" | quote }}
+    github_email = {{ promptStringOnce . "github_email" "GitHub email" | quote }}
+    azure_name   = {{ promptStringOnce . "azure_name" "Azure DevOps full name" | quote }}
+    azure_email  = {{ promptStringOnce . "azure_email" "Azure DevOps email" | quote }}

@@ -1,0 +1,38 @@
+# PATH
+export PATH="$HOME/.local/bin:$PATH"
+
+# nvm
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+# eza aliases
+alias ls='eza'
+alias ll='eza -la'
+alias lt='eza --tree'
+
+# Homebrew (macOS only)
+{{ if eq .chezmoi.os "darwin" -}}
+if [[ "$(uname -m)" == "arm64" ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+else
+  eval "$(/usr/local/bin/brew shellenv)"
+fi
+{{ end -}}
+
+# Antidote
+{{ if eq .chezmoi.os "darwin" -}}
+source /opt/homebrew/opt/antidote/share/antidote/antidote.zsh
+{{- else -}}
+source ~/.antidote/antidote.zsh
+{{- end }}
+antidote load
+
+# Shell integrations
+eval "$(starship init zsh)"
+eval "$(zoxide init zsh)"
+. "$HOME/.atuin/bin/env"
+eval "$(atuin init zsh)"
+
+# LS_COLORS via vivid
+command -v vivid >/dev/null 2>&1 && export LS_COLORS="$(vivid generate catppuccin-mocha)"
