@@ -1,2 +1,9 @@
 # Planning artifacts — not deployed to home directory
 Plans/
+
+# macOS-only configs — skip on Linux
+{{ if ne .chezmoi.os "darwin" }}
+.hammerspoon
+.config/hammerspoon
+.config/linearmouse
+{{ end }}
