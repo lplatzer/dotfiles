@@ -2,6 +2,7 @@
 set -e
 
 OS="$(uname -s)"
+IS_PERSONAL={{ if .is_personal }}true{{ else }}false{{ end }}
 
 # ── macOS ────────────────────────────────────────────────────────────────────
 if [[ "$OS" == "Darwin" ]]; then
@@ -16,9 +17,11 @@ if [[ "$OS" == "Darwin" ]]; then
       eval "$(/usr/local/bin/brew shellenv)"
     fi
   fi
-  brew bundle --file="$HOME/.local/share/chezmoi/Brewfile"
 
-  # mise: activate and install LTS node (mise itself installed via Brewfile)
+  # Brewfile deployed to ~/Brewfile by chezmoi (rendered from Brewfile.tmpl)
+  brew bundle --file="$HOME/Brewfile"
+
+  # mise: activate and install LTS node (mise installed via Brewfile)
   eval "$(mise activate bash)"
   mise use --global node@lts
 
@@ -26,16 +29,26 @@ if [[ "$OS" == "Darwin" ]]; then
   if ! command -v bun >/dev/null 2>&1; then
     curl -fsSL https://bun.sh/install | bash
   fi
+  export PATH="$HOME/.bun/bin:$PATH"
 
   # opencode
   if ! command -v opencode >/dev/null 2>&1 && [[ ! -f "$HOME/.opencode/bin/opencode" ]]; then
     curl -fsSL https://opencode.ai/install | sh
   fi
 
-  # Claude Code (needs bun on PATH)
-  if ! command -v claude >/dev/null 2>&1; then
-    export PATH="$HOME/.bun/bin:$PATH"
-    bun install --global @anthropic-ai/claude-code
+  # Claude Code
+  command -v claude >/dev/null 2>&1 || bun install --global @anthropic-ai/claude-code
+
+  # Codex CLI (OpenAI)
+  command -v codex >/dev/null 2>&1 || npm install -g @openai/codex
+
+  if [[ "$IS_PERSONAL" == "true" ]]; then
+    # vllm
+    command -v vllm >/dev/null 2>&1 || pip install vllm
+
+    # PAI — fill in your private repo URL and uncomment:
+    # PAI_REPO="git@github.com:YOUR_USERNAME/pai.git"
+    # [[ ! -d "$HOME/.claude" ]] && git clone "$PAI_REPO" "$HOME/.claude"
   fi
 
 # ── Arch Linux / CachyOS ─────────────────────────────────────────────────────
@@ -54,15 +67,6 @@ elif command -v pacman >/dev/null 2>&1; then
     dotnet-sdk \
     base-devel
 
-  # 1password-cli: chaotic-aur on CachyOS, otherwise AUR via paru
-  if ! command -v op >/dev/null 2>&1; then
-    if command -v paru >/dev/null 2>&1; then
-      paru -S --noconfirm 1password-cli
-    else
-      echo "1password-cli not installed — install via AUR (paru -S 1password-cli) manually." >&2
-    fi
-  fi
-
   # Antidote (not in official repos)
   if [[ ! -d "$HOME/.antidote" ]]; then
     git clone --depth=1 https://github.com/mattmc3/antidote.git "$HOME/.antidote"
@@ -70,7 +74,6 @@ elif command -v pacman >/dev/null 2>&1; then
 
   mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"
 
-  # rustup stable
   command -v rustup >/dev/null 2>&1 && rustup default stable 2>/dev/null || true
 
   # mise: install LTS node
@@ -81,6 +84,7 @@ elif command -v pacman >/dev/null 2>&1; then
   if ! command -v bun >/dev/null 2>&1; then
     curl -fsSL https://bun.sh/install | bash
   fi
+  export PATH="$HOME/.bun/bin:$PATH"
 
   # opencode
   if ! command -v opencode >/dev/null 2>&1 && [[ ! -f "$HOME/.opencode/bin/opencode" ]]; then
@@ -88,9 +92,35 @@ elif command -v pacman >/dev/null 2>&1; then
   fi
 
   # Claude Code
-  if ! command -v claude >/dev/null 2>&1; then
-    export PATH="$HOME/.bun/bin:$PATH"
-    bun install --global @anthropic-ai/claude-code
+  command -v claude >/dev/null 2>&1 || bun install --global @anthropic-ai/claude-code
+
+  # Codex CLI
+  command -v codex >/dev/null 2>&1 || npm install -g @openai/codex
+
+  if [[ "$IS_PERSONAL" == "true" ]]; then
+    # 1password-cli: chaotic-aur on CachyOS, otherwise manual
+    if ! command -v op >/dev/null 2>&1; then
+      if command -v paru >/dev/null 2>&1; then
+        paru -S --noconfirm 1password-cli
+      else
+        echo "1password-cli not installed — install via AUR (paru -S 1password-cli) manually." >&2
+      fi
+    fi
+
+    # Communication & personal apps (AUR)
+    if command -v paru >/dev/null 2>&1; then
+      paru -S --noconfirm --needed telegram-desktop signal-desktop whatsapp-for-linux obsidian
+    fi
+
+    # Ollama
+    command -v ollama >/dev/null 2>&1 || curl -fsSL https://ollama.ai/install.sh | sh
+
+    # vllm
+    command -v vllm >/dev/null 2>&1 || pip install vllm
+
+    # PAI — fill in your private repo URL and uncomment:
+    # PAI_REPO="git@github.com:YOUR_USERNAME/pai.git"
+    # [[ ! -d "$HOME/.claude" ]] && git clone "$PAI_REPO" "$HOME/.claude"
   fi
 
 # ── Debian / Ubuntu / WSL ────────────────────────────────────────────────────
@@ -119,14 +149,9 @@ elif command -v apt-get >/dev/null 2>&1; then
     sudo apt-get update -qq && sudo apt-get install -y eza
   fi
 
-  # starship
   command -v starship >/dev/null 2>&1 || curl -fsSL https://starship.rs/install.sh | sh -s -- -y
-
-  # zoxide
-  command -v zoxide >/dev/null 2>&1 || curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
-
-  # atuin
-  command -v atuin >/dev/null 2>&1 || curl -fsSL https://raw.githubusercontent.com/atuinsh/atuin/main/install.sh | bash
+  command -v zoxide  >/dev/null 2>&1 || curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+  command -v atuin   >/dev/null 2>&1 || curl -fsSL https://raw.githubusercontent.com/atuinsh/atuin/main/install.sh | bash
 
   # zellij
   if ! command -v zellij >/dev/null 2>&1; then
@@ -149,12 +174,10 @@ elif command -v apt-get >/dev/null 2>&1; then
     echo 'export PATH=$PATH:/usr/local/go/bin' >> "$HOME/.profile"
   fi
 
-  # mise (install via official script; no apt package)
+  # mise
   if ! command -v mise >/dev/null 2>&1; then
     curl -fsSL https://mise.run | sh
   fi
-
-  # mise: install LTS node + pnpm
   export PATH="$HOME/.local/bin:$PATH"
   eval "$(mise activate bash)"
   mise use --global node@lts
@@ -171,6 +194,7 @@ elif command -v apt-get >/dev/null 2>&1; then
   if ! command -v bun >/dev/null 2>&1; then
     curl -fsSL https://bun.sh/install | bash
   fi
+  export PATH="$HOME/.bun/bin:$PATH"
 
   # opencode
   if ! command -v opencode >/dev/null 2>&1 && [[ ! -f "$HOME/.opencode/bin/opencode" ]]; then
@@ -178,10 +202,10 @@ elif command -v apt-get >/dev/null 2>&1; then
   fi
 
   # Claude Code
-  if ! command -v claude >/dev/null 2>&1; then
-    export PATH="$HOME/.bun/bin:$PATH"
-    bun install --global @anthropic-ai/claude-code
-  fi
+  command -v claude >/dev/null 2>&1 || bun install --global @anthropic-ai/claude-code
+
+  # Codex CLI
+  command -v codex >/dev/null 2>&1 || npm install -g @openai/codex
 
 else
   echo "Unsupported OS/package manager. Install tools manually." >&2

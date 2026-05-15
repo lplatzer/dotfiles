@@ -1,0 +1,91 @@
+# ── Dotfiles & shell ─────────────────────────────────────────────────────────
+brew "chezmoi"
+brew "antidote"
+brew "zellij"
+brew "eza"
+brew "zoxide"
+brew "atuin"
+brew "starship"
+brew "vivid"
+
+# ── Core CLI ─────────────────────────────────────────────────────────────────
+brew "git"
+brew "gh"
+brew "wget"
+brew "fzf"
+brew "fd"
+brew "ripgrep"
+brew "lazygit"
+brew "tree-sitter-cli"
+brew "mas"
+
+# ── Editor deps (LazyVim) ────────────────────────────────────────────────────
+brew "neovim"
+brew "luarocks"
+brew "imagemagick"
+brew "ghostscript"
+brew "tectonic"
+
+# ── Dev tools ────────────────────────────────────────────────────────────────
+brew "mise"
+brew "pnpm"
+brew "go"
+brew "rustup"
+brew "dotnet"
+
+# ── macOS apps — all machines ────────────────────────────────────────────────
+cask "ghostty"
+cask "alfred"
+cask "swish"
+cask "dockdoor"
+cask "hammerspoon"
+cask "linearmouse"
+cask "nikitabobko/tap/aerospace"
+cask "istatmenus"
+cask "bartender"
+cask "cleanshot"
+cask "aldente"
+cask "forklift"
+cask "jetbrains-toolbox"
+cask "vivaldi"
+cask "ollama"
+cask "claude"
+cask "superwhisper"
+cask "obsidian"
+cask "setapp"
+cask "docker"
+cask "postman"
+cask "tidal"
+
+# ── Fonts ────────────────────────────────────────────────────────────────────
+cask "font-hack-nerd-font"
+cask "font-0xproto-nerd-font"
+
+# ── Personal machines only ───────────────────────────────────────────────────
+{{ if .is_personal }}
+# Credentials & privacy (work machines use manual SSH keys instead)
+brew "1password-cli"
+cask "1password"
+cask "little-snitch"
+cask "proton-mail"
+cask "protonvpn"
+cask "proton-drive"
+
+# Creative & productivity
+cask "figma"
+cask "affinity-designer"
+cask "affinity-photo"
+cask "affinity-publisher"
+cask "notion"
+cask "shapr3d"
+cask "linear-linear"
+
+# Communication
+cask "whatsapp"
+cask "telegram"
+cask "signal"
+
+# Media
+cask "qobuz"
+# cask "openwhispr"  # verify cask name — check: brew search whispr
+{{ end }}

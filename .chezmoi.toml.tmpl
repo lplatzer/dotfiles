@@ -4,3 +4,4 @@
     github_email = {{ promptStringOnce . "github_email" "GitHub email" | quote }}
     azure_name   = {{ promptStringOnce . "azure_name" "Azure DevOps full name" | quote }}
     azure_email  = {{ promptStringOnce . "azure_email" "Azure DevOps email" | quote }}
+    is_personal  = {{ promptBoolOnce . "is_personal" "Is this a personal machine? (installs messaging apps, Figma, Affinity, PAI)" }}
