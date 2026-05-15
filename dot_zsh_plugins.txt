@@ -1,8 +1,9 @@
-# zsh-completions must be added to fpath before compinit
+# zsh-completions must load into fpath before compinit
 zsh-users/zsh-completions kind:fpath path:src
 
 # Core UX
 zsh-users/zsh-autosuggestions
+jeffreytse/zsh-vi-mode
 ohmyzsh/ohmyzsh path:plugins/extract
 ohmyzsh/ohmyzsh path:plugins/sudo
 MichaelAquilina/zsh-you-should-use

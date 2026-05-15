@@ -1,4 +1,5 @@
 # Dotfiles tools
+brew "chezmoi"
 brew "antidote"
 brew "zellij"
 brew "eza"
@@ -9,6 +10,7 @@ brew "vivid"
 
 # Core CLI
 brew "git"
+brew "gh"
 brew "wget"
 brew "fzf"
 brew "fd"
@@ -26,6 +28,7 @@ brew "ghostscript"
 brew "tectonic"
 
 # Dev tools
+brew "mise"
 brew "pnpm"
 brew "go"
 brew "rustup"
@@ -53,4 +56,6 @@ cask "figma"
 cask "linear-linear"
 cask "docker"
 cask "shapr3d"
+cask "ghostty"
 cask "font-hack-nerd-font"
+cask "font-0xproto-nerd-font"
