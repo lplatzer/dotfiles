@@ -43,17 +43,19 @@ if [[ "$OS" == "Darwin" ]]; then
   command -v codex >/dev/null 2>&1 || npm install -g @openai/codex
 
   if [[ "$IS_PERSONAL" == "true" ]]; then
-    # OpenWhispr — no Homebrew cask; direct DMG install
-    # Fill in the download URL from https://www.openwhisper.app (or wherever you download it)
-    # OPENWHISPR_URL="https://FILL_IN_DOWNLOAD_URL/OpenWhispr.dmg"
-    # if [[ ! -d "/Applications/OpenWhispr.app" ]] && [[ -n "$OPENWHISPR_URL" ]]; then
-    #   TMP=$(mktemp -d)
-    #   curl -fsSL "$OPENWHISPR_URL" -o "$TMP/OpenWhispr.dmg"
-    #   hdiutil attach "$TMP/OpenWhispr.dmg" -mountpoint "$TMP/mnt" -quiet
-    #   cp -R "$TMP/mnt/"*.app /Applications/
-    #   hdiutil detach "$TMP/mnt" -quiet
-    #   rm -rf "$TMP"
-    # fi
+    # OpenWhispr — no Homebrew cask; latest DMG from GitHub releases
+    if [[ ! -d "/Applications/OpenWhispr.app" ]]; then
+      OPENWHISPR_URL=$(curl -fsSL https://api.github.com/repos/OpenWhispr/openwhispr/releases/latest \
+        | grep "browser_download_url.*\.dmg" | cut -d'"' -f4 | head -1)
+      if [[ -n "$OPENWHISPR_URL" ]]; then
+        TMP=$(mktemp -d)
+        curl -fsSL "$OPENWHISPR_URL" -o "$TMP/OpenWhispr.dmg"
+        hdiutil attach "$TMP/OpenWhispr.dmg" -mountpoint "$TMP/mnt" -quiet
+        cp -R "$TMP/mnt/"*.app /Applications/
+        hdiutil detach "$TMP/mnt" -quiet
+        rm -rf "$TMP"
+      fi
+    fi
 
     # vllm
     command -v vllm >/dev/null 2>&1 || pip install vllm
