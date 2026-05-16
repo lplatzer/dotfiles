@@ -1,45 +1,78 @@
-# macOS
+# ── macOS ─────────────────────────────────────────────────────────────────────
 .DS_Store
 .AppleDouble
 .LSOverride
 ._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+Icon?
 
-# IDE / editors
+# ── Linux ─────────────────────────────────────────────────────────────────────
+*~
+.directory
+.Trash-*
+
+# ── Windows ───────────────────────────────────────────────────────────────────
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ── Editors — JetBrains ───────────────────────────────────────────────────────
 .idea/
+
+# ── Editors — VS Code / Cursor / Windsurf ─────────────────────────────────────
 .vscode/
-*.suo
-*.user
-*.swp
-*.swo
-.nova/
+.cursor/
+.windsurf/
+
+# ── Editors — Zed ─────────────────────────────────────────────────────────────
 .zed/
 
-# Build artifacts
-node_modules/
-dist/
-build/
-out/
-.next/
-.nuxt/
-target/
-*.class
-*.o
-*.a
+# ── Editors — Vim / Neovim ────────────────────────────────────────────────────
+*.swp
+*.swo
+*.swn
+.netrwhist
+Session.vim
 
-# Logs
+# ── Editors — misc ────────────────────────────────────────────────────────────
+.nova/
+.fleet/
+*.suo
+*.user
+
+# ── Secrets & credentials ─────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+*.p12
+*.pfx
+*.cer
+*.cert
+.secrets
+.secrets/
+secrets.yaml
+secrets.json
+secrets.toml
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
 *.log
+*.log.*
+logs/
 npm-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+bun-error.log*
 
-# Environment / secrets
-.env
-.env.local
-.env.*.local
-
-# OS
-Thumbs.db
-ehthumbs.db
-
-# Misc
+# ── Runtime / temp ────────────────────────────────────────────────────────────
 *.orig
+*.tmp
+*.temp
+.cache/

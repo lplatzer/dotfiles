@@ -6,4 +6,5 @@ Plans/
 .hammerspoon
 .config/hammerspoon
 .config/linearmouse
+.aerospace.toml
 {{ end }}
