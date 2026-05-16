@@ -1,0 +1,226 @@
+#!/usr/bin/env bash
+set -e
+
+OS="$(uname -s)"
+IS_PERSONAL={{ if .is_personal }}true{{ else }}false{{ end }}
+
+# ── macOS ────────────────────────────────────────────────────────────────────
+if [[ "$OS" == "Darwin" ]]; then
+
+  # Homebrew
+  if ! command -v brew >/dev/null 2>&1; then
+    NONINTERACTIVE=1 /bin/bash -c \
+      "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    if [[ "$(uname -m)" == "arm64" ]]; then
+      eval "$(/opt/homebrew/bin/brew shellenv)"
+    else
+      eval "$(/usr/local/bin/brew shellenv)"
+    fi
+  fi
+
+  # Brewfile deployed to ~/Brewfile by chezmoi (rendered from Brewfile.tmpl)
+  brew bundle --file="$HOME/Brewfile"
+
+  # mise: activate and install LTS node (mise installed via Brewfile)
+  eval "$(mise activate bash)"
+  mise use --global node@lts
+
+  # bun
+  if ! command -v bun >/dev/null 2>&1; then
+    curl -fsSL https://bun.sh/install | bash
+  fi
+  export PATH="$HOME/.bun/bin:$PATH"
+
+  # opencode
+  if ! command -v opencode >/dev/null 2>&1 && [[ ! -f "$HOME/.opencode/bin/opencode" ]]; then
+    curl -fsSL https://opencode.ai/install | sh
+  fi
+
+  # Claude Code
+  command -v claude >/dev/null 2>&1 || bun install --global @anthropic-ai/claude-code
+
+  # Codex CLI (OpenAI)
+  command -v codex >/dev/null 2>&1 || npm install -g @openai/codex
+
+  if [[ "$IS_PERSONAL" == "true" ]]; then
+    # OpenWhispr — no Homebrew cask; latest DMG from GitHub releases
+    if [[ ! -d "/Applications/OpenWhispr.app" ]]; then
+      OPENWHISPR_URL=$(curl -fsSL https://api.github.com/repos/OpenWhispr/openwhispr/releases/latest \
+        | grep "browser_download_url.*\.dmg" | cut -d'"' -f4 | head -1)
+      if [[ -n "$OPENWHISPR_URL" ]]; then
+        TMP=$(mktemp -d)
+        curl -fsSL "$OPENWHISPR_URL" -o "$TMP/OpenWhispr.dmg"
+        hdiutil attach "$TMP/OpenWhispr.dmg" -mountpoint "$TMP/mnt" -quiet
+        cp -R "$TMP/mnt/"*.app /Applications/
+        hdiutil detach "$TMP/mnt" -quiet
+        rm -rf "$TMP"
+      fi
+    fi
+
+    # vllm
+    command -v vllm >/dev/null 2>&1 || pip install vllm
+
+    # PAI — fill in your private repo URL and uncomment:
+    # PAI_REPO="git@github.com:YOUR_USERNAME/pai.git"
+    # [[ ! -d "$HOME/.claude" ]] && git clone "$PAI_REPO" "$HOME/.claude"
+  fi
+
+# ── Arch Linux / CachyOS ─────────────────────────────────────────────────────
+elif command -v pacman >/dev/null 2>&1; then
+
+  sudo pacman -Syu --noconfirm
+  sudo pacman -S --noconfirm --needed \
+    git wget curl chezmoi mise \
+    zellij eza zoxide atuin starship vivid \
+    fzf fd ripgrep \
+    neovim lazygit \
+    luarocks imagemagick ghostscript \
+    go rustup \
+    python python-pip \
+    nodejs npm pnpm \
+    dotnet-sdk \
+    base-devel
+
+  # Antidote (not in official repos)
+  if [[ ! -d "$HOME/.antidote" ]]; then
+    git clone --depth=1 https://github.com/mattmc3/antidote.git "$HOME/.antidote"
+  fi
+
+  mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"
+
+  command -v rustup >/dev/null 2>&1 && rustup default stable 2>/dev/null || true
+
+  # mise: install LTS node
+  eval "$(mise activate bash)"
+  mise use --global node@lts
+
+  # bun
+  if ! command -v bun >/dev/null 2>&1; then
+    curl -fsSL https://bun.sh/install | bash
+  fi
+  export PATH="$HOME/.bun/bin:$PATH"
+
+  # opencode
+  if ! command -v opencode >/dev/null 2>&1 && [[ ! -f "$HOME/.opencode/bin/opencode" ]]; then
+    curl -fsSL https://opencode.ai/install | sh
+  fi
+
+  # Claude Code
+  command -v claude >/dev/null 2>&1 || bun install --global @anthropic-ai/claude-code
+
+  # Codex CLI
+  command -v codex >/dev/null 2>&1 || npm install -g @openai/codex
+
+  if [[ "$IS_PERSONAL" == "true" ]]; then
+    # 1password-cli: chaotic-aur on CachyOS, otherwise manual
+    if ! command -v op >/dev/null 2>&1; then
+      if command -v paru >/dev/null 2>&1; then
+        paru -S --noconfirm 1password-cli
+      else
+        echo "1password-cli not installed — install via AUR (paru -S 1password-cli) manually." >&2
+      fi
+    fi
+
+    # Communication & personal apps (AUR)
+    if command -v paru >/dev/null 2>&1; then
+      paru -S --noconfirm --needed telegram-desktop signal-desktop whatsapp-for-linux obsidian
+    fi
+
+    # Ollama
+    command -v ollama >/dev/null 2>&1 || curl -fsSL https://ollama.ai/install.sh | sh
+
+    # vllm
+    command -v vllm >/dev/null 2>&1 || pip install vllm
+
+    # PAI — fill in your private repo URL and uncomment:
+    # PAI_REPO="git@github.com:YOUR_USERNAME/pai.git"
+    # [[ ! -d "$HOME/.claude" ]] && git clone "$PAI_REPO" "$HOME/.claude"
+  fi
+
+# ── Debian / Ubuntu / WSL ────────────────────────────────────────────────────
+elif command -v apt-get >/dev/null 2>&1; then
+
+  sudo apt-get update -qq
+  sudo apt-get install -y --no-install-recommends \
+    git wget curl build-essential gpg \
+    fzf fd-find ripgrep \
+    neovim \
+    python3 python3-pip
+
+  # fd ships as fd-find on Debian/Ubuntu; shim it
+  if ! command -v fd >/dev/null 2>&1 && command -v fdfind >/dev/null 2>&1; then
+    mkdir -p "$HOME/.local/bin"
+    ln -sf "$(which fdfind)" "$HOME/.local/bin/fd"
+  fi
+
+  # eza
+  if ! command -v eza >/dev/null 2>&1; then
+    wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc \
+      | sudo gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
+    echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" \
+      | sudo tee /etc/apt/sources.list.d/gierens.list
+    sudo chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list
+    sudo apt-get update -qq && sudo apt-get install -y eza
+  fi
+
+  command -v starship >/dev/null 2>&1 || curl -fsSL https://starship.rs/install.sh | sh -s -- -y
+  command -v zoxide  >/dev/null 2>&1 || curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+  command -v atuin   >/dev/null 2>&1 || curl -fsSL https://raw.githubusercontent.com/atuinsh/atuin/main/install.sh | bash
+
+  # zellij
+  if ! command -v zellij >/dev/null 2>&1; then
+    ZELLIJ_VER=$(curl -fsSL https://api.github.com/repos/zellij-org/zellij/releases/latest | grep tag_name | cut -d'"' -f4)
+    curl -fsSL "https://github.com/zellij-org/zellij/releases/download/${ZELLIJ_VER}/zellij-x86_64-unknown-linux-musl.tar.gz" \
+      | tar -xz -C "$HOME/.local/bin"
+  fi
+
+  # lazygit
+  if ! command -v lazygit >/dev/null 2>&1; then
+    LG_VER=$(curl -fsSL https://api.github.com/repos/jesseduffield/lazygit/releases/latest | grep tag_name | cut -d'"' -f4 | sed 's/v//')
+    curl -fsSL "https://github.com/jesseduffield/lazygit/releases/download/v${LG_VER}/lazygit_${LG_VER}_Linux_x86_64.tar.gz" \
+      | tar -xz -C "$HOME/.local/bin" lazygit
+  fi
+
+  # go
+  if ! command -v go >/dev/null 2>&1; then
+    GO_VER=$(curl -fsSL https://go.dev/dl/?mode=json | python3 -c "import sys,json;print(json.load(sys.stdin)[0]['version'])")
+    curl -fsSL "https://go.dev/dl/${GO_VER}.linux-amd64.tar.gz" | sudo tar -C /usr/local -xz
+    echo 'export PATH=$PATH:/usr/local/go/bin' >> "$HOME/.profile"
+  fi
+
+  # mise
+  if ! command -v mise >/dev/null 2>&1; then
+    curl -fsSL https://mise.run | sh
+  fi
+  export PATH="$HOME/.local/bin:$PATH"
+  eval "$(mise activate bash)"
+  mise use --global node@lts
+  mise use --global pnpm@latest
+
+  # Antidote
+  if [[ ! -d "$HOME/.antidote" ]]; then
+    git clone --depth=1 https://github.com/mattmc3/antidote.git "$HOME/.antidote"
+  fi
+
+  mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"
+
+  # bun
+  if ! command -v bun >/dev/null 2>&1; then
+    curl -fsSL https://bun.sh/install | bash
+  fi
+  export PATH="$HOME/.bun/bin:$PATH"
+
+  # opencode
+  if ! command -v opencode >/dev/null 2>&1 && [[ ! -f "$HOME/.opencode/bin/opencode" ]]; then
+    curl -fsSL https://opencode.ai/install | sh
+  fi
+
+  # Claude Code
+  command -v claude >/dev/null 2>&1 || bun install --global @anthropic-ai/claude-code
+
+  # Codex CLI
+  command -v codex >/dev/null 2>&1 || npm install -g @openai/codex
+
+else
+  echo "Unsupported OS/package manager. Install tools manually." >&2
+fi

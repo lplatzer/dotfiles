@@ -1,10 +1,14 @@
 # PATH
 export PATH="$HOME/.local/bin:$PATH"
 
-# nvm
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+# bun
+export PATH="$HOME/.bun/bin:$PATH"
+
+# opencode
+export PATH="$HOME/.opencode/bin:$PATH"
+
+# mise (version manager — node, python, ruby, etc.)
+command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"
 
 # eza aliases
 alias ls='eza'
@@ -12,20 +16,20 @@ alias ll='eza -la'
 alias lt='eza --tree'
 
 # Homebrew (macOS only)
-{{ if eq .chezmoi.os "darwin" -}}
+{{ if eq .chezmoi.os "darwin" }}
 if [[ "$(uname -m)" == "arm64" ]]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 else
   eval "$(/usr/local/bin/brew shellenv)"
 fi
-{{ end -}}
+{{ end }}
 
 # Antidote
-{{ if eq .chezmoi.os "darwin" -}}
-source /opt/homebrew/opt/antidote/share/antidote/antidote.zsh
-{{- else -}}
-source ~/.antidote/antidote.zsh
-{{- end }}
+{{ if eq .chezmoi.os "darwin" }}
+source "$(brew --prefix)/opt/antidote/share/antidote/antidote.zsh"
+{{ else }}
+source "$HOME/.antidote/antidote.zsh"
+{{ end }}
 antidote load
 
 # Shell integrations
@@ -36,3 +40,6 @@ eval "$(atuin init zsh)"
 
 # LS_COLORS via vivid
 command -v vivid >/dev/null 2>&1 && export LS_COLORS="$(vivid generate catppuccin-mocha)"
+
+# PAI alias — no-op if not installed
+[[ -f "$HOME/.claude/PAI/Tools/pai.ts" ]] && alias pai='bun "$HOME/.claude/PAI/Tools/pai.ts"'
