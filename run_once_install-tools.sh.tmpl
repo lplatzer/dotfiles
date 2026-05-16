@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+# No set -e: optional installs failing should warn, not abort the session.
 
 OS="$(uname -s)"
 IS_PERSONAL={{ if .is_personal }}true{{ else }}false{{ end }}
@@ -67,11 +67,14 @@ if [[ "$OS" == "Darwin" ]]; then
 
 # ── Arch Linux / CachyOS ─────────────────────────────────────────────────────
 elif command -v pacman >/dev/null 2>&1; then
+  export PATH="$HOME/.local/bin:$PATH"
+  mkdir -p "$HOME/.local/bin"
+
   [[ "$SHELL" != "$(which zsh)" ]] && chsh -s "$(which zsh)" || true
 
   sudo pacman -Syu --noconfirm
   sudo pacman -S --noconfirm --needed \
-    ghostty git wget curl chezmoi mise \
+    zsh ghostty git wget curl chezmoi mise \
     zellij eza zoxide atuin starship vivid \
     fzf fd ripgrep \
     neovim lazygit \
@@ -144,12 +147,20 @@ elif command -v pacman >/dev/null 2>&1; then
 # ── Debian / Ubuntu / WSL ────────────────────────────────────────────────────
 elif command -v apt-get >/dev/null 2>&1; then
 
+  export PATH="$HOME/.local/bin:$PATH"
+  mkdir -p "$HOME/.local/bin"
+
   sudo apt-get update -qq
   sudo apt-get install -y --no-install-recommends \
     git wget curl build-essential gpg zsh \
     fzf fd-find ripgrep \
     neovim \
     python3 python3-pip
+
+  # chezmoi (official installer — idempotent)
+  if ! command -v chezmoi >/dev/null 2>&1; then
+    sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"
+  fi
 
   # fd ships as fd-find on Debian/Ubuntu; shim it
   if ! command -v fd >/dev/null 2>&1 && command -v fdfind >/dev/null 2>&1; then
