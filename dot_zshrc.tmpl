@@ -35,7 +35,7 @@ antidote load
 # Shell integrations
 eval "$(starship init zsh)"
 eval "$(zoxide init zsh)"
-. "$HOME/.atuin/bin/env"
+[[ -f "$HOME/.atuin/bin/env" ]] && . "$HOME/.atuin/bin/env"
 eval "$(atuin init zsh)"
 
 # LS_COLORS via vivid
