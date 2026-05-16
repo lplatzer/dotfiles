@@ -3,6 +3,7 @@ Plans/
 
 # macOS-only configs — skip on Linux
 {{ if ne .chezmoi.os "darwin" }}
+Brewfile
 .hammerspoon
 .config/hammerspoon
 .config/linearmouse
