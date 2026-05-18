@@ -1,6 +1,11 @@
 # Planning artifacts — not deployed to home directory
 Plans/
 
+# PowerShell install script — Windows only
+{{ if ne .chezmoi.os "windows" -}}
+run_once_install-tools.ps1
+{{ end -}}
+
 # macOS-only configs — skip on Linux
 {{ if ne .chezmoi.os "darwin" }}
 Brewfile
