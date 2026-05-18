@@ -1,7 +1,7 @@
+{{- $computerTypeChoice := list "personal" "work" -}}
+{{- $hostType := promptChoice "What type of machine is this?" $computerTypeChoice -}}
 [data]
     name         = {{ promptStringOnce . "name" "Full name" | quote }}
     email        = {{ promptStringOnce . "email" "Personal email (default git identity)" | quote }}
-    github_email = {{ promptStringOnce . "github_email" "GitHub email" | quote }}
-    azure_name   = {{ promptStringOnce . "azure_name" "Azure DevOps full name" | quote }}
-    azure_email  = {{ promptStringOnce . "azure_email" "Azure DevOps email" | quote }}
-    is_personal  = {{ promptBoolOnce . "is_personal" "Is this a personal machine? (installs messaging apps, Figma, Affinity, PAI)" }}
+    work_email   = {{ promptStringOnce . "work_email" "Work email (Azure DevOps / git)" | quote }}
+    is_personal  = {{ eq $hostType "personal" }}
