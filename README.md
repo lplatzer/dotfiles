@@ -34,7 +34,7 @@ Personal dotfiles managed by [chezmoi](https://chezmoi.io). Covers macOS (primar
 
 ```bash
 # 1. Install chezmoi and apply dotfiles in one shot
-sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply git@github.com:lplatzer/dotfiles-chezmoi.git
+sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply https://github.com/lplatzer/dotfiles-chezmoi.git
 ```
 
 chezmoi will prompt for:
