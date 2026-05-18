@@ -1,7 +1,8 @@
 {{- $computerTypeChoice := list "personal" "work" -}}
-{{- $hostType := promptChoice "What type of machine is this?" $computerTypeChoice -}}
+{{- $hostType := promptChoice "What type of machine is this" $computerTypeChoice -}}
 [data]
     name         = {{ promptStringOnce . "name" "Full name" | quote }}
     email        = {{ promptStringOnce . "email" "Personal email (default git identity)" | quote }}
     work_email   = {{ promptStringOnce . "work_email" "Work email (Azure DevOps / git)" | quote }}
+    machine_type = {{ $hostType | quote }}
     is_personal  = {{ eq $hostType "personal" }}
