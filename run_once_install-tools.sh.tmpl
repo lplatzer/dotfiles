@@ -21,9 +21,17 @@ if [[ "$OS" == "Darwin" ]]; then
   # Brewfile deployed to ~/Brewfile by chezmoi (rendered from Brewfile.tmpl)
   brew bundle --file="$HOME/Brewfile"
 
-  # mise: activate and install LTS node (mise installed via Brewfile)
+  # Enable daily auto-updates (update + upgrade + cleanup via launchd)
+  brew autoupdate start 86400 --upgrade --cleanup 2>/dev/null || true
+
+  # mise: activate and install runtimes (mise installed via Brewfile)
   eval "$(mise activate bash)"
   mise use --global node@lts
+  mise use --global python@latest
+  mise use --global zig@latest
+
+  # rustup: initialise stable toolchain so cargo is available
+  command -v rustup >/dev/null 2>&1 && rustup default stable 2>/dev/null || true
 
   # bun
   if ! command -v bun >/dev/null 2>&1; then
@@ -79,7 +87,7 @@ elif command -v pacman >/dev/null 2>&1; then
     fzf fd ripgrep \
     neovim lazygit \
     luarocks imagemagick ghostscript \
-    go rustup \
+    go rustup zig uv \
     python python-pip \
     nodejs npm pnpm \
     dotnet-sdk \
@@ -94,9 +102,10 @@ elif command -v pacman >/dev/null 2>&1; then
 
   command -v rustup >/dev/null 2>&1 && rustup default stable 2>/dev/null || true
 
-  # mise: install LTS node
+  # mise: install runtimes
   eval "$(mise activate bash)"
   mise use --global node@lts
+  mise use --global python@latest
   command -v tree-sitter >/dev/null 2>&1 || npm install -g tree-sitter-cli
 
   # bun
@@ -225,8 +234,15 @@ elif command -v apt-get >/dev/null 2>&1; then
   export PATH="$HOME/.local/bin:$PATH"
   eval "$(mise activate bash)"
   mise use --global node@lts
+  mise use --global python@latest
+  mise use --global zig@latest
   mise use --global pnpm@latest
   command -v tree-sitter >/dev/null 2>&1 || npm install -g tree-sitter-cli
+
+  # uv (Python package manager / project tool)
+  if ! command -v uv >/dev/null 2>&1; then
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+  fi
 
   # dotnet (LTS via install script)
   if ! command -v dotnet >/dev/null 2>&1; then
