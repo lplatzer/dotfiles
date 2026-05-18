@@ -76,7 +76,7 @@ The install script installs all tools via `pacman` + optional AUR (paru), then b
 sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin
 
 # 2. Apply dotfiles
-~/.local/bin/chezmoi init --apply git@github.com:lplatzer/dotfiles-chezmoi.git
+~/.local/bin/chezmoi init --apply https://github.com/lplatzer/dotfiles.git
 ```
 
 The install script installs tools via apt, adds third-party repos for eza and gh, then bootstraps zellij, lazygit, Go, Rust, mise, bun, and Claude Code via their official installers.
