@@ -21,7 +21,7 @@ Personal dotfiles managed by [chezmoi](https://chezmoi.io). Covers macOS (primar
 | **Git UI** | [lazygit](https://github.com/jesseduffield/lazygit) |
 | **LS_COLORS** | [vivid](https://github.com/sharkdp/vivid) (Catppuccin Mocha) |
 | **AI CLIs** | [Claude Code](https://claude.ai/code), [opencode](https://opencode.ai), [Codex](https://github.com/openai/codex) |
-| **macOS only** | AeroSpace, Hammerspoon, Ghostty, LinearMouse, Alfred, and more |
+| **macOS only** | AeroSpace, Hammerspoon, LinearMouse, Alfred, and more |
 | **Dev runtimes** | Go, Rust (rustup), .NET, Node (via mise) |
 
 ---
