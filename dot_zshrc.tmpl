@@ -1,3 +1,12 @@
+# Homebrew (macOS only) — must come first; Homebrew-managed tools need to be in PATH
+{{ if eq .chezmoi.os "darwin" }}
+if [[ -x /opt/homebrew/bin/brew ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -x /usr/local/bin/brew ]]; then
+  eval "$(/usr/local/bin/brew shellenv)"
+fi
+{{ end }}
+
 # PATH
 export PATH="$HOME/.local/bin:$PATH"
 
@@ -10,19 +19,12 @@ export PATH="$HOME/.opencode/bin:$PATH"
 # mise (version manager — node, python, ruby, etc.)
 command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"
 
-# eza aliases
-alias ls='eza'
-alias ll='eza -la'
-alias lt='eza --tree'
-
-# Homebrew (macOS only)
-{{ if eq .chezmoi.os "darwin" }}
-if [[ "$(uname -m)" == "arm64" ]]; then
-  eval "$(/opt/homebrew/bin/brew shellenv)"
-else
-  eval "$(/usr/local/bin/brew shellenv)"
+# eza aliases — only if installed
+if command -v eza >/dev/null 2>&1; then
+  alias ls='eza'
+  alias ll='eza -la'
+  alias lt='eza --tree'
 fi
-{{ end }}
 
 # Antidote
 {{ if eq .chezmoi.os "darwin" }}
@@ -33,10 +35,10 @@ source "$HOME/.antidote/antidote.zsh"
 antidote load
 
 # Shell integrations
-eval "$(starship init zsh)"
-eval "$(zoxide init zsh)"
+command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
+command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
 [[ -f "$HOME/.atuin/bin/env" ]] && . "$HOME/.atuin/bin/env"
-eval "$(atuin init zsh)"
+command -v atuin >/dev/null 2>&1 && eval "$(atuin init zsh)"
 
 # LS_COLORS via vivid
 command -v vivid >/dev/null 2>&1 && export LS_COLORS="$(vivid generate catppuccin-mocha)"
