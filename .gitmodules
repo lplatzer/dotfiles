@@ -1,0 +1,3 @@
+[submodule "dot_config/nvim-kickstart"]
+	path = dot_config/nvim-kickstart
+	url = git@github.com:lplatzer/kickstart.nvim.git
