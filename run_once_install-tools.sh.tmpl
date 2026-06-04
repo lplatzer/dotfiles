@@ -91,7 +91,17 @@ elif command -v pacman >/dev/null 2>&1; then
     python python-pip \
     nodejs npm pnpm \
     dotnet-sdk \
+    hyprland xdg-desktop-portal-hyprland wl-clipboard cliphist \
     base-devel gh
+
+  # walker launcher (AUR) — Alfred-equivalent runner, bound to Super+Space in Hyprland
+  if ! command -v walker >/dev/null 2>&1; then
+    if command -v paru >/dev/null 2>&1; then
+      paru -S --noconfirm --needed walker-bin
+    else
+      echo "walker not installed — install via AUR (paru -S walker-bin) manually." >&2
+    fi
+  fi
 
   # Antidote (not in official repos)
   if [[ ! -d "$HOME/.antidote" ]]; then
@@ -158,6 +168,10 @@ elif command -v apt-get >/dev/null 2>&1; then
 
   export PATH="$HOME/.local/bin:$PATH"
   mkdir -p "$HOME/.local/bin"
+
+  # Note: the Hyprland desktop (hyprland/walker/etc.) is intentionally NOT in this
+  # branch. CachyOS (pacman branch) is the graphical target; the apt branch covers
+  # Debian/Ubuntu/WSL, which are headless/server, and Debian's Hyprland lags badly.
 
   sudo apt-get update -qq
   sudo apt-get install -y --no-install-recommends \

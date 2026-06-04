@@ -9,8 +9,11 @@ install-tools.ps1
 # macOS-only configs — skip on Linux
 {{ if ne .chezmoi.os "darwin" }}
 Brewfile
-.hammerspoon
-.config/hammerspoon
 .config/linearmouse
 .aerospace.toml
+{{ end }}
+
+# Linux-only configs — skip on macOS/Windows (Hyprland is a Wayland compositor)
+{{ if ne .chezmoi.os "linux" }}
+.config/hypr
 {{ end }}
