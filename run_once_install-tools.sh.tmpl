@@ -33,6 +33,9 @@ if [[ "$OS" == "Darwin" ]]; then
   # rustup: initialise stable toolchain so cargo is available
   command -v rustup >/dev/null 2>&1 && rustup default stable 2>/dev/null || true
 
+  # ty — Astral Python type checker / LSP (alpha), used by Neovim's basedpyright+ty setup
+  command -v ty >/dev/null 2>&1 || uv tool install ty
+
   # bun
   if ! command -v bun >/dev/null 2>&1; then
     curl -fsSL https://bun.sh/install | bash
@@ -111,6 +114,9 @@ elif command -v pacman >/dev/null 2>&1; then
   mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"
 
   command -v rustup >/dev/null 2>&1 && rustup default stable 2>/dev/null || true
+
+  # ty — Astral Python type checker / LSP (alpha), used by Neovim's basedpyright+ty setup
+  command -v ty >/dev/null 2>&1 || uv tool install ty
 
   # mise: install runtimes
   eval "$(mise activate bash)"
@@ -257,6 +263,9 @@ elif command -v apt-get >/dev/null 2>&1; then
   if ! command -v uv >/dev/null 2>&1; then
     curl -LsSf https://astral.sh/uv/install.sh | sh
   fi
+
+  # ty — Astral Python type checker / LSP (alpha), used by Neovim's basedpyright+ty setup
+  command -v ty >/dev/null 2>&1 || uv tool install ty
 
   # dotnet (LTS via install script)
   if ! command -v dotnet >/dev/null 2>&1; then
