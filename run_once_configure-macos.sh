@@ -19,7 +19,7 @@ defaults write com.apple.finder AppleShowAllFiles true
 defaults write com.apple.finder ShowPathbar -bool true
 defaults write com.apple.finder ShowStatusBar -bool true
 defaults write com.apple.finder NewWindowTarget PfHm
-defaults write com.apple.Finder FXPreferredViewStyle Nlsv
+defaults write com.apple.finder FXPreferredViewStyle Nlsv
 defaults write com.apple.finder _FXSortFoldersFirst -bool true
 defaults write com.apple.finder DisableAllAnimations -bool true
 defaults write com.apple.finder QuitMenuItem -bool true
