@@ -104,14 +104,22 @@ elif command -v pacman >/dev/null 2>&1; then
     pipewire-pulse wireplumber pamixer brightnessctl \
     btop fastfetch \
     noto-fonts noto-fonts-emoji ttf-jetbrains-mono-nerd \
-    base-devel gh
+    base-devel github-cli
 
   # walker + elephant providers (AUR) — bound to Super+Space in Hyprland
-  # elephant-all-bin bundles elephant + every official provider (desktopapplications, etc.)
+  # walker-bin pulls in elephant (source); install only provider plugins as -bin to avoid conflict.
   if command -v paru >/dev/null 2>&1; then
-    paru -S --noconfirm --needed walker-bin elephant-all-bin
+    paru -S --noconfirm --needed walker-bin \
+      elephant-desktopapplications-bin \
+      elephant-providerlist-bin \
+      elephant-runner-bin \
+      elephant-files-bin \
+      elephant-calc-bin \
+      elephant-websearch-bin \
+      elephant-clipboard-bin \
+      elephant-windows-bin
   else
-    echo "walker/elephant not installed — run: paru -S walker-bin elephant-all-bin" >&2
+    echo "walker/elephant not installed — run: paru -S walker-bin elephant-desktopapplications-bin" >&2
   fi
 
   # Antidote (not in official repos)
@@ -124,13 +132,20 @@ elif command -v pacman >/dev/null 2>&1; then
   command -v rustup >/dev/null 2>&1 && rustup default stable 2>/dev/null || true
 
   # ty — Astral Python type checker / LSP (alpha), used by Neovim's basedpyright+ty setup
-  command -v ty >/dev/null 2>&1 || uv tool install ty
+  if command -v uv >/dev/null 2>&1; then
+    command -v ty >/dev/null 2>&1 || uv tool install ty
+  fi
 
   # mise: install runtimes
-  eval "$(mise activate bash)"
-  mise use --global node@lts
-  mise use --global python@latest
-  command -v tree-sitter >/dev/null 2>&1 || npm install -g tree-sitter-cli
+  if command -v mise >/dev/null 2>&1; then
+    eval "$(mise activate bash)" 2>/dev/null || true
+    mise use --global node@lts
+    mise use --global python@latest
+  fi
+
+  if command -v npm >/dev/null 2>&1; then
+    command -v tree-sitter >/dev/null 2>&1 || npm install -g tree-sitter-cli
+  fi
 
   # bun
   if ! command -v bun >/dev/null 2>&1; then
@@ -148,7 +163,9 @@ elif command -v pacman >/dev/null 2>&1; then
 
   # Codex CLI
   # if possible, move to bun in the future
-  command -v codex >/dev/null 2>&1 || npm install -g @openai/codex
+  if command -v npm >/dev/null 2>&1; then
+    command -v codex >/dev/null 2>&1 || npm install -g @openai/codex
+  fi
 
   if [[ "$IS_PERSONAL" == "true" ]]; then
     # 1password-cli: chaotic-aur on CachyOS, otherwise manual
