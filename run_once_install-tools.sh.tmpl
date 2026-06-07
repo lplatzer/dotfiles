@@ -94,6 +94,7 @@ elif command -v pacman >/dev/null 2>&1; then
     python python-pip \
     nodejs npm pnpm \
     dotnet-sdk \
+    uwsm \
     hyprland xdg-desktop-portal-hyprland wl-clipboard cliphist \
     nautilus gvfs gvfs-smb \
     waybar \
@@ -105,13 +106,12 @@ elif command -v pacman >/dev/null 2>&1; then
     noto-fonts noto-fonts-emoji ttf-jetbrains-mono-nerd \
     base-devel gh
 
-  # walker launcher (AUR) — Alfred-equivalent runner, bound to Super+Space in Hyprland
-  if ! command -v walker >/dev/null 2>&1; then
-    if command -v paru >/dev/null 2>&1; then
-      paru -S --noconfirm --needed walker-bin
-    else
-      echo "walker not installed — install via AUR (paru -S walker-bin) manually." >&2
-    fi
+  # walker + elephant providers (AUR) — bound to Super+Space in Hyprland
+  # elephant-all-bin bundles elephant + every official provider (desktopapplications, etc.)
+  if command -v paru >/dev/null 2>&1; then
+    paru -S --noconfirm --needed walker-bin elephant-all-bin
+  else
+    echo "walker/elephant not installed — run: paru -S walker-bin elephant-all-bin" >&2
   fi
 
   # Antidote (not in official repos)

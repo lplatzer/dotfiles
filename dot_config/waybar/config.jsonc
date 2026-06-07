@@ -10,7 +10,6 @@
 
     "hyprland/workspaces": {
         "format": "{id}",
-        "on-click": "activate",
         "on-scroll-up": "hyprctl dispatch workspace e+1",
         "on-scroll-down": "hyprctl dispatch workspace e-1"
     },
@@ -37,6 +36,8 @@
             "warning": 30,
             "critical": 15
         },
+        "full-at": 100,
+        "tooltip-format": "{capacity}% — {timeTo}\n{power}W",
         "format": "{icon} {capacity}%",
         "format-charging": " {capacity}%",
         "format-plugged": " {capacity}%",
