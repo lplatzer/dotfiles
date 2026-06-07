@@ -10,7 +10,8 @@ local mod = "ALT"
 
 -- ── Apps ─────────────────────────────────────────────────────────────────────
 hl.bind(mod .. " + Return", hl.dsp.exec_cmd("ghostty"))
-hl.bind("SUPER + Space", hl.dsp.exec_cmd("walker"))
+hl.bind("SUPER + Space",    hl.dsp.exec_cmd("walker"))
+hl.bind(mod .. " + E",      hl.dsp.exec_cmd("nautilus"))
 
 -- ── Window operations (mirror AeroSpace) ─────────────────────────────────────
 hl.bind(mod .. " + Q", hl.dsp.window.close())

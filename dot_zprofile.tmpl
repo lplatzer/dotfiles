@@ -1,0 +1,6 @@
+{{ if eq .chezmoi.os "linux" -}}
+# UWSM: auto-launch Hyprland on TTY1 login
+if uwsm check may-start; then
+    exec uwsm start hyprland.desktop
+fi
+{{ end -}}

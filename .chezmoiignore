@@ -13,7 +13,11 @@ Brewfile
 .aerospace.toml
 {{ end }}
 
-# Linux-only configs — skip on macOS/Windows (Hyprland is a Wayland compositor)
+# Linux-only configs — skip on macOS/Windows
 {{ if ne .chezmoi.os "linux" }}
 .config/hypr
+.config/uwsm
+.config/walker
+.config/waybar
+.config/mako
 {{ end }}

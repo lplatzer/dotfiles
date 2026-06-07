@@ -49,21 +49,24 @@ on-mode-changed = []
 [key-mapping]
     preset = 'qwerty'
 
-# Gaps — 8px inner/outer to match the Hyprland side visually.
+# Gaps — match Hyprland defaults (5px inner, 20px outer).
 [gaps]
-    inner.horizontal = 8
-    inner.vertical   = 8
-    outer.left       = 8
-    outer.right      = 8
-    outer.top        = 8
-    outer.bottom     = 8
+    inner.horizontal = 5
+    inner.vertical   = 5
+    outer.left       = 20
+    outer.right      = 20
+    outer.top        = 20
+    outer.bottom     = 20
 
 # ── main mode ────────────────────────────────────────────────────────────────
 # Modifiers: cmd, alt, ctrl, shift. Commands: nikitabobko.github.io/AeroSpace/commands
 [mode.main.binding]
 
-    # Terminal (i3-style). Opens a new Ghostty window.
+    # Terminal (mirrors ALT+Return on Hyprland).
     alt-enter = 'exec-and-forget open -na Ghostty'
+
+    # File manager (mirrors ALT+E on Hyprland → nautilus).
+    alt-e = 'exec-and-forget open -na Finder'
 
     # Window operations — letters mirror the Hyprland binds.
     alt-q           = 'close'                    # killactive

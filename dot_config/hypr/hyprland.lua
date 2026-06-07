@@ -14,13 +14,18 @@ hl.monitor({
 })
 
 -- ── Environment ──────────────────────────────────────────────────────────────
-hl.env("XCURSOR_SIZE",    "24")
-hl.env("HYPRCURSOR_SIZE", "24")
+-- Set via UWSM from ~/.config/uwsm/env and ~/.config/uwsm/env-hyprland.
+-- Uncomment if running Hyprland without UWSM:
+-- hl.env("XCURSOR_SIZE",    "24")
+-- hl.env("HYPRCURSOR_SIZE", "24")
 
 -- ── Autostart ────────────────────────────────────────────────────────────────
 hl.on("hyprland.start", function()
-    hl.exec_cmd("elephant")                                     -- walker's required companion daemon
-    hl.exec_cmd("walker --gapplication-service")                -- walker background service (faster startup)
+    hl.exec_cmd("mako")                                         -- notification daemon
+    hl.exec_cmd("hypridle")                                     -- idle management / lock screen trigger
+    hl.exec_cmd("waybar")                                       -- status bar
+    hl.exec_cmd("elephant")                                     -- walker companion daemon (app index)
+    hl.exec_cmd("walker --gapplication-service")                -- walker background service
     hl.exec_cmd("wl-paste --type text  --watch cliphist store")
     hl.exec_cmd("wl-paste --type image --watch cliphist store")
 end)
