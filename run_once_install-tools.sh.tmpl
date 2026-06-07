@@ -144,7 +144,7 @@ elif command -v pacman >/dev/null 2>&1; then
   fi
 
   if command -v npm >/dev/null 2>&1; then
-    command -v tree-sitter >/dev/null 2>&1 || npm install -g tree-sitter-cli
+    command -v tree-sitter >/dev/null 2>&1 || sudo npm install -g tree-sitter-cli
   fi
 
   # bun
@@ -164,7 +164,7 @@ elif command -v pacman >/dev/null 2>&1; then
   # Codex CLI
   # if possible, move to bun in the future
   if command -v npm >/dev/null 2>&1; then
-    command -v codex >/dev/null 2>&1 || npm install -g @openai/codex
+    command -v codex >/dev/null 2>&1 || sudo npm install -g @openai/codex
   fi
 
   if [[ "$IS_PERSONAL" == "true" ]]; then
