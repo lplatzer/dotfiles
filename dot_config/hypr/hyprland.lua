@@ -18,9 +18,9 @@ hl.env("XCURSOR_SIZE",    "24")
 hl.env("HYPRCURSOR_SIZE", "24")
 
 -- ── Autostart ────────────────────────────────────────────────────────────────
--- Note: walker is launched directly on keypress (keybinds.lua), not as a
--- background service — service mode requires UWSM/D-Bus session setup.
 hl.on("hyprland.start", function()
+    hl.exec_cmd("elephant")                                     -- walker's required companion daemon
+    hl.exec_cmd("walker --gapplication-service")                -- walker background service (faster startup)
     hl.exec_cmd("wl-paste --type text  --watch cliphist store")
     hl.exec_cmd("wl-paste --type image --watch cliphist store")
 end)
