@@ -57,9 +57,9 @@ hl.bind(mod .. " + SHIFT + E", hl.dsp.exit())
 hl.bind(mod .. " + Escape", hl.dsp.exec_cmd("hyprlock"))
 
 -- ── Screenshots (grim + slurp + satty) ──────────────────────────────────────
-hl.bind(", Print",      hl.dsp.exec_cmd([[grim -g "$(slurp)" - | satty --filename -]]))
-hl.bind("SHIFT, Print", hl.dsp.exec_cmd("grim - | wl-copy"))
-hl.bind(mod .. ", Print", hl.dsp.exec_cmd([[grim -g "$(slurp)" - | wl-copy]]))
+hl.bind("Print",           hl.dsp.exec_cmd([[grim -g "$(slurp)" - | satty --filename -]]))
+hl.bind("SHIFT + Print",   hl.dsp.exec_cmd("grim - | wl-copy"))
+hl.bind(mod .. " + Print", hl.dsp.exec_cmd([[grim -g "$(slurp)" - | wl-copy]]))
 
 -- ── Media keys (pipewire-pulse + wireplumber) ────────────────────────────────
 hl.bind("XF86AudioRaiseVolume",  hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"), { locked = true, repeating = true })
