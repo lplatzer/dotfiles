@@ -244,6 +244,13 @@ keybinds clear-defaults=true {
     }
 }
 
+// ── Session & UX (added) ──────────────────────────────────────────────
+// Restore each pane's scrollback/viewport when resurrecting a serialized
+// session (session_serialization is already on by default).
+serialize_pane_viewport true
+// Less noise when opening panes/sessions.
+show_startup_tips false
+
 // Plugin aliases - can be used to change the implementation of Zellij
 // changing these requires a restart to take effect
 plugins {

@@ -12,6 +12,7 @@ export PATH="$HOME/.local/bin:$PATH"
 
 # bun
 export PATH="$HOME/.bun/bin:$PATH"
+[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"   # completions
 
 # opencode
 export PATH="$HOME/.opencode/bin:$PATH"
@@ -37,6 +38,8 @@ antidote load
 # Shell integrations
 command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
 command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
+# fzf: completion + Ctrl-T (files) and Alt-C (cd). Before atuin so atuin keeps Ctrl-R.
+command -v fzf >/dev/null 2>&1 && source <(fzf --zsh)
 [[ -f "$HOME/.atuin/bin/env" ]] && . "$HOME/.atuin/bin/env"
 command -v atuin >/dev/null 2>&1 && eval "$(atuin init zsh)"
 
@@ -45,3 +48,22 @@ command -v vivid >/dev/null 2>&1 && export LS_COLORS="$(vivid generate catppucci
 
 # PAI alias — no-op if not installed
 [[ -f "$HOME/.claude/PAI/Tools/pai.ts" ]] && alias pai='bun "$HOME/.claude/PAI/Tools/pai.ts"'
+
+# nvim: kickstart variant via NVIM_APPNAME (separate config from LazyVim)
+alias vik='NVIM_APPNAME=nvim-kickstart nvim'
+
+# sessionizer: Ctrl-f -> fzf-pick a project and switch to its zellij session
+_sessionizer() { BUFFER="sessionizer"; zle accept-line; }
+zle -N _sessionizer
+bindkey '^f' _sessionizer
+# zsh-vi-mode resets keymaps on init; re-apply through its hook so the bind sticks.
+zvm_after_init_commands+=('bindkey "^f" _sessionizer')
+
+# zellij: auto-attach a session for interactive shells.
+# Skips VSCode's integrated terminal and nested sessions; ZELLIJ_AUTO_EXIT
+# closes the shell when you exit zellij. Must stay last — it execs zellij.
+if command -v zellij >/dev/null 2>&1 && [[ -z "$ZELLIJ" && "$TERM_PROGRAM" != "vscode" ]]; then
+  export ZELLIJ_AUTO_ATTACH=true
+  export ZELLIJ_AUTO_EXIT=true
+  eval "$(zellij setup --generate-auto-start zsh)"
+fi

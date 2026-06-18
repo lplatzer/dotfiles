@@ -1,0 +1,22 @@
+// Starter dev layout. Launch with:  zellij --layout dev
+// Lives in ~/.config/zellij/layouts/ (shared across macOS + Linux via chezmoi).
+layout {
+    // Main coding tab: editor on the left, a terminal stacked over a runner.
+    tab name="code" focus=true {
+        pane split_direction="vertical" {
+            pane size="65%"   // editor / primary work
+            pane split_direction="horizontal" {
+                pane          // terminal
+                pane          // logs / repl / runner
+            }
+        }
+    }
+    // Git tab. Swap the command or drop it if lazygit isn't installed.
+    tab name="git" {
+        pane command="lazygit"
+    }
+    // zellij's default status bar.
+    pane size=1 borderless=true {
+        plugin location="zellij:compact-bar"
+    }
+}

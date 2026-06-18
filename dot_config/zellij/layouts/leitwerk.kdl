@@ -1,0 +1,16 @@
+// Project layout for ~/projects/ai/leitwerk — auto-applied by the sessionizer.
+// cwd is set by the sessionizer (--cwd), so panes open in the project root.
+layout {
+    // Working tab: nvim, launched in the project root.
+    tab name="nvim" focus=true {
+        pane command="nvim"
+    }
+    // Docker Compose tab: a shell in the project, ready for
+    //   docker compose up | logs -f | ps   (docker-compose.yml is here).
+    tab name="compose" {
+        pane
+    }
+    pane size=1 borderless=true {
+        plugin location="zellij:compact-bar"
+    }
+}

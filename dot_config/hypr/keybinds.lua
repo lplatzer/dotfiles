@@ -1,17 +1,18 @@
 -- Hyprland keybinds — the Linux half of a cross-platform tiling setup.
 -- Mirrors ~/.aerospace.toml on macOS. Loaded via require("keybinds") from hyprland.lua.
 --
--- Unified mod key: ALT (same physical key + behaviour as AeroSpace on macOS).
--- Launcher lives on SUPER+Space (mirroring Alfred on Cmd+Space) — deliberately a
--- different modifier from mod so a custom keyboard remap of Cmd/Super+Space
--- stays correct across both machines.
+-- WM mod = HYPER = CTRL ALT SUPER (THREE modifiers, Shift excluded so it stays
+-- free for the move/shifted variants). Emitted by a dedicated ZSA thumb key
+-- (QMK Left Ctrl + Left Alt + Left GUI), identical on macOS and Linux.
+--
+-- Launcher stays on bare SUPER+Space (walker), mirroring Cmd+Space (Alfred) on
+-- macOS — a different key from mod, so the keyboard remap stays valid.
 
-local mod = "ALT"
+local mod = "CTRL ALT SUPER"
 
 -- ── Apps ─────────────────────────────────────────────────────────────────────
 hl.bind(mod .. " + Return", hl.dsp.exec_cmd("ghostty"))
 hl.bind("SUPER + Space",    hl.dsp.exec_cmd("walker"))
-hl.bind(mod .. " + E",      hl.dsp.exec_cmd("nautilus"))
 
 -- ── Window operations (mirror AeroSpace) ─────────────────────────────────────
 hl.bind(mod .. " + Q", hl.dsp.window.close())

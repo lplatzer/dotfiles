@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# zellij sessionizer — fzf-pick a project (or an nvim config) and jump to a
+# zellij session for it, creating it on first use. Bound to Ctrl-f in zsh.
+#
+# Candidates: both nvim configs + code dirs under ~/projects (depth 1-2).
+# Per-project layout: if ~/.config/zellij/layouts/<name>.kdl exists it is applied
+# on first creation (e.g. leitwerk -> nvim + compose tabs).
+
+if [[ $# -eq 1 ]]; then
+    selected="$1"
+else
+    selected="$( {
+        echo "$HOME/.config/nvim"
+        echo "$HOME/.config/nvim-kickstart"
+        find "$HOME/projects" -mindepth 1 -maxdepth 2 -type d -not -path '*/.*' 2>/dev/null
+    } | sort -u | fzf --prompt='project> ' --height=40% --reverse --border )"
+fi
+
+[[ -z "$selected" ]] && exit 0
+
+name="$(basename "$selected" | tr '. ' '__')"
+layout_dir="$HOME/.config/zellij/layouts"
+
+session_exists() { zellij list-sessions -ns 2>/dev/null | grep -qx "$name"; }
+
+if [[ -n "${ZELLIJ:-}" ]]; then
+    # Inside a zellij session -> switch (switch-session creates if missing).
+    if session_exists; then
+        zellij action switch-session "$name"
+    else
+        args=(--cwd "$selected")
+        [[ -f "$layout_dir/$name.kdl" ]] && args+=(--layout "$name")
+        zellij action switch-session "${args[@]}" "$name"
+    fi
+else
+    # Outside zellij -> attach or create.
+    if session_exists; then
+        zellij attach "$name"
+    elif [[ -f "$layout_dir/$name.kdl" ]]; then
+        (cd "$selected" && zellij --session "$name" --layout "$name")
+    else
+        (cd "$selected" && zellij --session "$name")
+    fi
+fi

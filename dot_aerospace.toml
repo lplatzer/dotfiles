@@ -1,47 +1,38 @@
 # AeroSpace — macOS tiling WM
 # Deployed to ~/.aerospace.toml (macOS only; gated in .chezmoiignore).
 #
-# This config is the macOS half of a cross-platform tiling setup whose
-# keybindings mirror Hyprland on Linux (see ~/.config/hypr/keybinds.conf).
+# macOS half of a cross-platform tiling setup; keybindings mirror Hyprland on
+# Linux (see ~/.config/hypr/keybinds.conf).
 #
-# Unified mod key: ALT (same physical key on both OSes -> true muscle-memory
-# parity, and far fewer conflicts than Cmd, which macOS reserves heavily).
+# WM mod = HYPER, defined as Ctrl+Alt+Cmd (THREE modifiers, Shift intentionally
+# excluded so Shift stays free for the "move/shifted" variants below).
+# Emitted by a dedicated thumb key on the ZSA keyboard (QMK), so it's identical
+# on macOS and Linux and collides with nothing — no app uses Ctrl+Alt+Cmd, and
+# Cmd/Alt remain fully native for app shortcuts and terminal/zellij keys.
 #
-# Launcher is intentionally NOT bound here: Alfred owns Cmd+Space at the macOS
-# level, mirroring walker on Super+Space under Hyprland. Keeping the launcher on
-# the Cmd/Super key (not Alt) means a custom keyboard remap of Cmd/Super+Space
-# stays correct on both machines.
+#   IMPORTANT (Oryx): map the thumb key to Left Ctrl + Left Alt + Left GUI.
+#   Do NOT use QMK's KC_HYPR — that includes Shift and would break move binds.
+#
+# Launcher stays on bare Cmd+Space (Alfred), mirroring Super+Space (walker) on
+# Linux — a different key from the WM mod, so the keyboard remap stays valid.
 #
 # Docs: https://nikitabobko.github.io/AeroSpace/guide
 
 config-version = 2
 
 after-startup-command = []
-
-# A WM should always be running.
 start-at-login = true
 
-# Normalizations — keep the tree tidy. See guide#normalization
 enable-normalization-flatten-containers = true
 enable-normalization-opposite-orientation-for-nested-containers = true
 
-# Accordion padding (0 disables). See guide#layouts
 accordion-padding = 30
-
-# Possible values: tiles|accordion
 default-root-container-layout = 'tiles'
-
-# horizontal|vertical|auto — 'auto' picks by monitor aspect ratio
 default-root-container-orientation = 'auto'
 
-# Mouse warps to the newly focused monitor.
 on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
-
-# Leave macOS "Hide application" (Cmd+H) intact.
 automatically-unhide-macos-hidden-apps = false
 
-# Numbered workspaces 1-10, matching Hyprland. Add letter workspaces here if you
-# want them, but note letters are used for window ops below (q/f).
 persistent-workspaces = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
 
 on-mode-changed = []
@@ -49,90 +40,86 @@ on-mode-changed = []
 [key-mapping]
     preset = 'qwerty'
 
-# Gaps — match Hyprland defaults (5px inner, 20px outer).
 [gaps]
-    inner.horizontal = 5
-    inner.vertical   = 5
-    outer.left       = 20
-    outer.right      = 20
-    outer.top        = 20
-    outer.bottom     = 20
+    inner.horizontal = 8
+    inner.vertical   = 8
+    outer.left       = 8
+    outer.right      = 8
+    outer.top        = 8
+    outer.bottom     = 8
 
 # ── main mode ────────────────────────────────────────────────────────────────
+# WM mod = cmd-alt-ctrl (Hyper). Shifted variants add shift.
 # Modifiers: cmd, alt, ctrl, shift. Commands: nikitabobko.github.io/AeroSpace/commands
 [mode.main.binding]
 
-    # Terminal (mirrors ALT+Return on Hyprland).
-    alt-enter = 'exec-and-forget open -na Ghostty'
+    # Terminal (new Ghostty window).
+    cmd-alt-ctrl-enter = 'exec-and-forget open -na Ghostty'
 
-    # File manager (mirrors ALT+E on Hyprland → nautilus).
-    alt-e = 'exec-and-forget open -na Finder'
+    # Window operations.
+    cmd-alt-ctrl-q           = 'close'
+    cmd-alt-ctrl-f           = 'fullscreen'
+    cmd-alt-ctrl-shift-space = 'layout floating tiling'
 
-    # Window operations — letters mirror the Hyprland binds.
-    alt-q           = 'close'                    # killactive
-    alt-f           = 'fullscreen'               # toggle fullscreen
-    alt-shift-space = 'layout floating tiling'   # toggle floating/tiling
-
-    # Layout toggles (AeroSpace-specific; no Hyprland equivalent).
-    alt-slash = 'layout tiles horizontal vertical'
-    alt-comma = 'layout accordion horizontal vertical'
+    # Layout toggles.
+    cmd-alt-ctrl-slash = 'layout tiles horizontal vertical'
+    cmd-alt-ctrl-comma = 'layout accordion horizontal vertical'
 
     # Focus (vim h/j/k/l).
-    alt-h = 'focus left'
-    alt-j = 'focus down'
-    alt-k = 'focus up'
-    alt-l = 'focus right'
+    cmd-alt-ctrl-h = 'focus left'
+    cmd-alt-ctrl-j = 'focus down'
+    cmd-alt-ctrl-k = 'focus up'
+    cmd-alt-ctrl-l = 'focus right'
 
     # Move window.
-    alt-shift-h = 'move left'
-    alt-shift-j = 'move down'
-    alt-shift-k = 'move up'
-    alt-shift-l = 'move right'
+    cmd-alt-ctrl-shift-h = 'move left'
+    cmd-alt-ctrl-shift-j = 'move down'
+    cmd-alt-ctrl-shift-k = 'move up'
+    cmd-alt-ctrl-shift-l = 'move right'
 
     # Resize.
-    alt-minus = 'resize smart -50'
-    alt-equal = 'resize smart +50'
+    cmd-alt-ctrl-minus = 'resize smart -50'
+    cmd-alt-ctrl-equal = 'resize smart +50'
 
     # Switch workspace.
-    alt-1 = 'workspace 1'
-    alt-2 = 'workspace 2'
-    alt-3 = 'workspace 3'
-    alt-4 = 'workspace 4'
-    alt-5 = 'workspace 5'
-    alt-6 = 'workspace 6'
-    alt-7 = 'workspace 7'
-    alt-8 = 'workspace 8'
-    alt-9 = 'workspace 9'
-    alt-0 = 'workspace 10'
+    cmd-alt-ctrl-1 = 'workspace 1'
+    cmd-alt-ctrl-2 = 'workspace 2'
+    cmd-alt-ctrl-3 = 'workspace 3'
+    cmd-alt-ctrl-4 = 'workspace 4'
+    cmd-alt-ctrl-5 = 'workspace 5'
+    cmd-alt-ctrl-6 = 'workspace 6'
+    cmd-alt-ctrl-7 = 'workspace 7'
+    cmd-alt-ctrl-8 = 'workspace 8'
+    cmd-alt-ctrl-9 = 'workspace 9'
+    cmd-alt-ctrl-0 = 'workspace 10'
 
     # Move focused window to workspace.
-    alt-shift-1 = 'move-node-to-workspace 1'
-    alt-shift-2 = 'move-node-to-workspace 2'
-    alt-shift-3 = 'move-node-to-workspace 3'
-    alt-shift-4 = 'move-node-to-workspace 4'
-    alt-shift-5 = 'move-node-to-workspace 5'
-    alt-shift-6 = 'move-node-to-workspace 6'
-    alt-shift-7 = 'move-node-to-workspace 7'
-    alt-shift-8 = 'move-node-to-workspace 8'
-    alt-shift-9 = 'move-node-to-workspace 9'
-    alt-shift-0 = 'move-node-to-workspace 10'
+    cmd-alt-ctrl-shift-1 = 'move-node-to-workspace 1'
+    cmd-alt-ctrl-shift-2 = 'move-node-to-workspace 2'
+    cmd-alt-ctrl-shift-3 = 'move-node-to-workspace 3'
+    cmd-alt-ctrl-shift-4 = 'move-node-to-workspace 4'
+    cmd-alt-ctrl-shift-5 = 'move-node-to-workspace 5'
+    cmd-alt-ctrl-shift-6 = 'move-node-to-workspace 6'
+    cmd-alt-ctrl-shift-7 = 'move-node-to-workspace 7'
+    cmd-alt-ctrl-shift-8 = 'move-node-to-workspace 8'
+    cmd-alt-ctrl-shift-9 = 'move-node-to-workspace 9'
+    cmd-alt-ctrl-shift-0 = 'move-node-to-workspace 10'
 
-    # Workspace back-and-forth, and bounce a workspace to the next monitor.
-    alt-tab       = 'workspace-back-and-forth'
-    alt-shift-tab = 'move-workspace-to-monitor --wrap-around next'
+    # Workspace navigation.
+    cmd-alt-ctrl-tab       = 'workspace-back-and-forth'
+    cmd-alt-ctrl-shift-tab = 'move-workspace-to-monitor --wrap-around next'
 
-    # Enter service mode for less-frequent operations.
-    alt-shift-semicolon = 'mode service'
+    # Enter service mode.
+    cmd-alt-ctrl-shift-semicolon = 'mode service'
 
 # ── service mode ─────────────────────────────────────────────────────────────
 [mode.service.binding]
     esc       = ['reload-config', 'mode main']
-    r         = ['flatten-workspace-tree', 'mode main']   # reset layout
-    f         = ['layout floating tiling', 'mode main']   # toggle float/tile
+    r         = ['flatten-workspace-tree', 'mode main']
+    f         = ['layout floating tiling', 'mode main']
     backspace = ['close-all-windows-but-current', 'mode main']
 
-    # Join the focused window with a neighbour (build nested containers).
-    alt-shift-h = ['join-with left', 'mode main']
-    alt-shift-j = ['join-with down', 'mode main']
-    alt-shift-k = ['join-with up', 'mode main']
-    alt-shift-l = ['join-with right', 'mode main']
+    cmd-alt-ctrl-shift-h = ['join-with left', 'mode main']
+    cmd-alt-ctrl-shift-j = ['join-with down', 'mode main']
+    cmd-alt-ctrl-shift-k = ['join-with up', 'mode main']
+    cmd-alt-ctrl-shift-l = ['join-with right', 'mode main']
