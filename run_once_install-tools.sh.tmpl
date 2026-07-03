@@ -5,24 +5,9 @@ OS="$(uname -s)"
 IS_PERSONAL={{ if .is_personal }}true{{ else }}false{{ end }}
 
 # ── macOS ────────────────────────────────────────────────────────────────────
+# Homebrew + brew bundle live in run_onchange_before_install-brew.sh.tmpl (tracks Brewfile
+# changes independently so edits here don't trigger a full brew bundle re-run).
 if [[ "$OS" == "Darwin" ]]; then
-
-  # Homebrew
-  if ! command -v brew >/dev/null 2>&1; then
-    NONINTERACTIVE=1 /bin/bash -c \
-      "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    if [[ "$(uname -m)" == "arm64" ]]; then
-      eval "$(/opt/homebrew/bin/brew shellenv)"
-    else
-      eval "$(/usr/local/bin/brew shellenv)"
-    fi
-  fi
-
-  # Brewfile deployed to ~/Brewfile by chezmoi (rendered from Brewfile.tmpl)
-  brew bundle --file="$HOME/Brewfile"
-
-  # Enable daily auto-updates (update + upgrade + cleanup via launchd)
-  brew autoupdate start 86400 --upgrade --cleanup 2>/dev/null || true
 
   # mise: activate and install runtimes (mise installed via Brewfile)
   eval "$(mise activate bash)"
@@ -104,7 +89,8 @@ elif command -v pacman >/dev/null 2>&1; then
     pipewire-pulse wireplumber pamixer brightnessctl \
     btop fastfetch \
     noto-fonts noto-fonts-emoji ttf-jetbrains-mono-nerd \
-    base-devel github-cli
+    base-devel github-cli \
+    wireshark-qt
 
   # walker + elephant providers (AUR) — bound to Super+Space in Hyprland
   # walker-bin pulls in elephant (source); install only provider plugins as -bin to avoid conflict.
@@ -126,6 +112,9 @@ elif command -v pacman >/dev/null 2>&1; then
   if [[ ! -d "$HOME/.antidote" ]]; then
     git clone --depth=1 https://github.com/mattmc3/antidote.git "$HOME/.antidote"
   fi
+
+  # Wireshark: add current user to capture group
+  sudo gpasswd -a "$USER" wireshark 2>/dev/null || true
 
   mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"
 
@@ -210,6 +199,14 @@ elif command -v apt-get >/dev/null 2>&1; then
     fzf fd-find ripgrep \
     neovim \
     python3 python3-pip
+
+  # Wireshark — pre-answer the "allow non-root capture" prompt, then add user to group
+  if ! command -v wireshark >/dev/null 2>&1; then
+    echo "wireshark-common wireshark-common/install-setuid boolean true" \
+      | sudo debconf-set-selections
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y wireshark
+    sudo usermod -aG wireshark "$USER" 2>/dev/null || true
+  fi
 
   # chezmoi (official installer — idempotent)
   if ! command -v chezmoi >/dev/null 2>&1; then

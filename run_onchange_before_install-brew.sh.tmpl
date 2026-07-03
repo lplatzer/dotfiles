@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Installs Homebrew and runs brew bundle.
+# Re-runs only when Brewfile.tmpl changes (hash below is auto-tracked by chezmoi).
+# Brewfile.tmpl SHA256: {{ sha256sum (include (joinPath .chezmoi.sourceDir "Brewfile.tmpl")) }}
+
+[[ "$(uname -s)" == "Darwin" ]] || exit 0
+
+if ! command -v brew >/dev/null 2>&1; then
+  NONINTERACTIVE=1 /bin/bash -c \
+    "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  if [[ "$(uname -m)" == "arm64" ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  else
+    eval "$(/usr/local/bin/brew shellenv)"
+  fi
+fi
+
+# Brewfile deployed to ~/Brewfile by chezmoi (rendered from Brewfile.tmpl).
+# --no-upgrade: install missing packages only; upgrades handled by autoupdate.
+brew bundle --no-upgrade --file="$HOME/Brewfile"
+
+# Enable daily auto-updates (update + upgrade + cleanup via launchd)
+brew autoupdate start 86400 --upgrade --cleanup 2>/dev/null || true
