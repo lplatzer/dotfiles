@@ -50,12 +50,12 @@ cask "cleanshot"
 cask "aldente"
 cask "forklift"
 cask "vivaldi"
-cask "ollama"
+cask "ollama-app"
 cask "claude"
 cask "superwhisper"
 cask "obsidian"
-cask "docker"
-cask "wireshark"
+cask "docker-desktop"
+cask "wireshark-app"
 
 # ── Fonts ────────────────────────────────────────────────────────────────────
 cask "font-0xproto-nerd-font"
@@ -63,7 +63,7 @@ cask "font-0xproto-nerd-font"
 # ── Personal machines only ───────────────────────────────────────────────────
 {{ if .is_personal }}
 # Credentials & privacy (work machines use manual SSH keys instead)
-brew "1password-cli"
+cask "1password-cli"
 cask "1password"
 cask "little-snitch"
 cask "proton-mail"

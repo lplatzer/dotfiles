@@ -53,8 +53,9 @@ if [[ "$OS" == "Darwin" ]]; then
       fi
     fi
 
-    # vllm
-    command -v vllm >/dev/null 2>&1 || pip install vllm
+    # vllm (best-effort: upstream vllm releases can pin a torch version no
+    # longer on PyPI, which fails the build — don't let that abort the script)
+    command -v vllm >/dev/null 2>&1 || pip install vllm || echo "vllm install failed — install manually" >&2
 
     # PAI — fill in your private repo URL and uncomment:
     # PAI_REPO="git@github.com:YOUR_USERNAME/pai.git"
