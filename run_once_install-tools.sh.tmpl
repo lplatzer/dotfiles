@@ -36,7 +36,7 @@ if [[ "$OS" == "Darwin" ]]; then
   command -v claude >/dev/null 2>&1 || bun install --global @anthropic-ai/claude-code
 
   # Codex CLI (OpenAI)
-  command -v codex >/dev/null 2>&1 || npm install -g @openai/codex
+  command -v codex >/dev/null 2>&1 || npm install -g @openai/codex || echo "codex install failed — install manually" >&2
 
   if [[ "$IS_PERSONAL" == "true" ]]; then
     # OpenWhispr — no Homebrew cask; latest DMG from GitHub releases
@@ -154,7 +154,7 @@ elif command -v pacman >/dev/null 2>&1; then
   # Codex CLI
   # if possible, move to bun in the future
   if command -v npm >/dev/null 2>&1; then
-    command -v codex >/dev/null 2>&1 || sudo npm install -g @openai/codex
+    command -v codex >/dev/null 2>&1 || sudo npm install -g @openai/codex || echo "codex install failed — install manually" >&2
   fi
 
   if [[ "$IS_PERSONAL" == "true" ]]; then
@@ -173,7 +173,7 @@ elif command -v pacman >/dev/null 2>&1; then
     fi
 
     # Ollama
-    command -v ollama >/dev/null 2>&1 || curl -fsSL https://ollama.ai/install.sh | sh
+    command -v ollama >/dev/null 2>&1 || curl -fsSL https://ollama.ai/install.sh | sh || echo "ollama install failed — install manually" >&2
 
     # vllm
     # Arch enforces PEP 668 according to claude code, so this would not run
@@ -332,7 +332,7 @@ elif command -v apt-get >/dev/null 2>&1; then
   command -v claude >/dev/null 2>&1 || bun install --global @anthropic-ai/claude-code
 
   # Codex CLI
-  command -v codex >/dev/null 2>&1 || npm install -g @openai/codex
+  command -v codex >/dev/null 2>&1 || npm install -g @openai/codex || echo "codex install failed — install manually" >&2
 
   if [[ "$IS_PERSONAL" == "true" ]]; then
     # 1Password CLI
@@ -345,7 +345,7 @@ elif command -v apt-get >/dev/null 2>&1; then
     fi
 
     # Ollama
-    command -v ollama >/dev/null 2>&1 || curl -fsSL https://ollama.ai/install.sh | sh
+    command -v ollama >/dev/null 2>&1 || curl -fsSL https://ollama.ai/install.sh | sh || echo "ollama install failed — install manually" >&2
 
     # GUI apps via snap (skipped on headless/WSL — no display server)
     if command -v snap >/dev/null 2>&1 && [[ -n "${DISPLAY:-}" || -n "${WAYLAND_DISPLAY:-}" ]]; then
