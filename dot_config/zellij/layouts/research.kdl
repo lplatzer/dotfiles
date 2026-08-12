@@ -1,0 +1,24 @@
+// Research session layout — a notes/research workspace, not a code project.
+// Launch it with the `research` shell function (roots it at your notes vault
+// and names the session "research"); that sets cwd, so panes open in the vault.
+layout {
+    default_tab_template {
+        children
+        pane size=1 borderless=true {
+            plugin location="zellij:compact-bar"
+        }
+    }
+    // Research surface: your notes on the left, a Claude research assistant on
+    // the right — read/write the vault while Claude digs, side by side.
+    tab name="research" focus=true {
+        pane split_direction="vertical" {
+            pane command="nvim" size="55%"
+            pane command="claude"
+        }
+    }
+    // Shell: ripgrep / fd / git over the vault — search notes, wire wikilinks,
+    // commit. Plain shell in the vault root.
+    tab name="shell" {
+        pane
+    }
+}

@@ -20,13 +20,23 @@ brew "ripgrep"
 brew "lazygit"
 brew "tree-sitter-cli"
 brew "mas"
+brew "yazi"
+brew "sevenzip"
+brew "jq"
 
 # ── Editor deps (LazyVim) ────────────────────────────────────────────────────
 brew "neovim"
 brew "luarocks"
 brew "imagemagick"
+# imagemagick-full: keg-only superset (extra codecs); kept alongside plain
+# imagemagick since other formulae depend on that name specifically.
+# Not on PATH by default — see `brew info imagemagick-full` for the PATH caveat.
+brew "imagemagick-full"
 brew "ghostscript"
 brew "tectonic"
+brew "poppler"
+brew "resvg"
+brew "ffmpeg-full"
 
 # ── Dev tools ────────────────────────────────────────────────────────────────
 brew "mise"
@@ -45,17 +55,10 @@ cask "dockdoor"
 cask "linearmouse"
 cask "nikitabobko/tap/aerospace"
 cask "istat-menus"
-cask "bartender"
-cask "cleanshot"
-cask "aldente"
-cask "forklift"
-cask "vivaldi"
-cask "ollama-app"
-cask "claude"
-cask "superwhisper"
-cask "obsidian"
 cask "docker-desktop"
 cask "wireshark-app"
+# Bartender, CleanShot X, AlDente, ForkLift, Vivaldi, Ollama, Claude, superwhisper,
+# Obsidian: moved to direct vendor-fetch install, see run_once_install-vendor-apps.sh.tmpl
 
 # ── Fonts ────────────────────────────────────────────────────────────────────
 cask "font-0xproto-nerd-font"
@@ -64,27 +67,30 @@ cask "font-0xproto-nerd-font"
 {{ if .is_personal }}
 # Credentials & privacy (work machines use manual SSH keys instead)
 cask "1password-cli"
-cask "1password"
+# 1Password: moved to direct vendor-fetch install (security-sensitive; vendor states
+# the Mac app is officially available only from their own site), see
+# run_once_install-vendor-apps.sh.tmpl
+# Little Snitch: stays a Homebrew cask — no unattended vendor-fetch path exists;
+# it ships as an installer app requiring interactive system-extension approval +
+# reboot, so cp -R into /Applications would produce a non-working install.
 cask "little-snitch"
-cask "proton-mail"
-cask "protonvpn"
-cask "proton-drive"
+# Proton Mail, Proton VPN, Proton Drive: discontinued entirely, not installed anymore
 
 # Creative & productivity
-cask "jetbrains-toolbox"
-cask "figma"
+# JetBrains Toolbox, Figma, Notion: moved to direct vendor-fetch install,
+# see run_once_install-vendor-apps.sh.tmpl
 cask "affinity-designer"
 cask "affinity-photo"
 cask "affinity-publisher"
-cask "notion"
-cask "shapr3d"
+mas "Shapr3D", id: 1091675654
 
 # Communication
-cask "whatsapp"
-cask "telegram"
-cask "signal"
+mas "WhatsApp Messenger", id: 310633997
+mas "Telegram", id: 747648890
+# Signal: moved to direct vendor-fetch install (no Mac App Store build exists),
+# see run_once_install-vendor-apps.sh.tmpl
 
 # Media
-cask "qobuz"
+# Qobuz: moved to direct vendor-fetch install, see run_once_install-vendor-apps.sh.tmpl
 # OpenWhispr: no Homebrew cask — installed directly via run_once script
 {{ end }}

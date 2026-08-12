@@ -20,7 +20,7 @@ Personal dotfiles managed by [chezmoi](https://chezmoi.io). Covers macOS (primar
 | **JS runtime** | [bun](https://bun.sh) |
 | **Git UI** | [lazygit](https://github.com/jesseduffield/lazygit) |
 | **LS_COLORS** | [vivid](https://github.com/sharkdp/vivid) (Catppuccin Mocha) |
-| **AI CLIs** | [Claude Code](https://claude.ai/code), [opencode](https://opencode.ai), [Codex](https://github.com/openai/codex) |
+| **AI CLIs** | [Claude Code](https://claude.ai/code), [Codex](https://github.com/openai/codex) |
 | **macOS only** | AeroSpace, Hammerspoon, LinearMouse, Alfred, and more |
 | **Dev runtimes** | Go, Rust (rustup), .NET, Node (via mise) |
 
@@ -53,7 +53,7 @@ After chezmoi applies the files, the `run_once_install-tools.sh` script runs aut
 1. Installs Homebrew (if missing)
 2. Runs `brew bundle` from `~/Brewfile`
 3. Installs mise + Node LTS
-4. Installs bun, opencode, Claude Code, Codex
+4. Installs bun, Claude Code, Codex
 
 The `run_once_configure-macos.sh` script also runs once to set sensible macOS system defaults (Finder, Dock, autocorrect, etc.).
 
@@ -67,7 +67,7 @@ sudo pacman -S chezmoi
 chezmoi init --apply git@github.com:lplatzer/dotfiles-chezmoi.git
 ```
 
-The install script installs all tools via `pacman` + optional AUR (paru), then bootstraps mise, bun, Claude Code, and opencode. Personal machines also get Ollama, Telegram, Signal, WhatsApp, and Obsidian.
+The install script installs all tools via `pacman` + optional AUR (paru), then bootstraps mise, bun, Claude Code, and Codex. Personal machines also get Ollama, Telegram, Signal, WhatsApp, and Obsidian.
 
 ### Debian / Ubuntu / WSL
 

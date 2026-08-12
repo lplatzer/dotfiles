@@ -245,9 +245,12 @@ keybinds clear-defaults=true {
 }
 
 // ── Session & UX (added) ──────────────────────────────────────────────
-// Restore each pane's scrollback/viewport when resurrecting a serialized
-// session (session_serialization is already on by default).
-serialize_pane_viewport true
+// Session serialization OFF: we never resurrect old sessions (they only piled
+// up as EXITED "corpses" in `zellij ls`), and the periodic scrollback-to-disk
+// dumps were steady background CPU that Ghostty rendered as energy use. Flip
+// this back to true (and re-add `serialize_pane_viewport true`) if you ever
+// want sessions to survive a reboot.
+session_serialization false
 // Less noise when opening panes/sessions.
 show_startup_tips false
 

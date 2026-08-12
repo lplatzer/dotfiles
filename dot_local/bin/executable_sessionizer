@@ -37,7 +37,10 @@ else
     if session_exists; then
         zellij attach "$name"
     elif [[ -f "$layout_dir/$name.kdl" ]]; then
-        (cd "$selected" && zellij --session "$name" --layout "$name")
+        # --layout + --session means "add tabs to existing session $name" (attach
+        # semantics) and fails cold-start with "Session not found". Use
+        # --new-session-with-layout (-n) to actually CREATE a new session + layout.
+        (cd "$selected" && zellij --session "$name" --new-session-with-layout "$name")
     else
         (cd "$selected" && zellij --session "$name")
     fi

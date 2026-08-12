@@ -1,6 +1,16 @@
 // Project layout for ~/projects/ai/leitwerk — auto-applied by the sessionizer.
 // cwd is set by the sessionizer (--cwd), so panes open in the project root.
 layout {
+    // The compact status bar is injected into every tab via this template.
+    // A bare `pane` cannot sit beside `tab` nodes at the layout root — that was
+    // the "Cannot have both tabs and panes in the same node" parse error.
+    // `children` marks where each tab's own panes are placed.
+    default_tab_template {
+        children
+        pane size=1 borderless=true {
+            plugin location="zellij:compact-bar"
+        }
+    }
     // Working tab: nvim, launched in the project root.
     tab name="nvim" focus=true {
         pane command="nvim"
@@ -10,7 +20,8 @@ layout {
     tab name="compose" {
         pane
     }
-    pane size=1 borderless=true {
-        plugin location="zellij:compact-bar"
+    // Git tab — lazygit, for parity with the platzer.dev / design-system layouts.
+    tab name="git" {
+        pane command="lazygit"
     }
 }

@@ -61,9 +61,10 @@ on-mode-changed = []
     cmd-alt-ctrl-f           = 'fullscreen'
     cmd-alt-ctrl-shift-space = 'layout floating tiling'
 
-    # Layout toggles.
+    # Layout toggle. No accordion bind: it used to live on cmd-alt-ctrl-comma,
+    # but ',' neighbours '/' and a mistyped toggle silently stacks a workspace
+    # (accordion is per-workspace runtime state, so a config reload won't undo it).
     cmd-alt-ctrl-slash = 'layout tiles horizontal vertical'
-    cmd-alt-ctrl-comma = 'layout accordion horizontal vertical'
 
     # Focus (vim h/j/k/l).
     cmd-alt-ctrl-h = 'focus left'

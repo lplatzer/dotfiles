@@ -14,11 +14,20 @@ export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.bun/bin:$PATH"
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"   # completions
 
-# opencode
-export PATH="$HOME/.opencode/bin:$PATH"
-
 # mise (version manager — node, python, ruby, etc.)
 command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"
+
+# Pi (coding agent) — a global npm package under mise's node, so `mise activate`
+# above normally already puts it on PATH; this is the fallback for a shell where
+# the activate hook hasn't run. No OS branch needed: mise is XDG-based on macOS
+# too (~/.local/share/mise), not ~/Library/Application Support. Resolved through
+# the `lts` alias symlink rather than a pinned version so a node upgrade doesn't
+# silently drop pi off PATH.
+if ! command -v pi >/dev/null 2>&1; then
+  _mise_node_bin="${XDG_DATA_HOME:-$HOME/.local/share}/mise/installs/node/lts/bin"
+  [[ -x "$_mise_node_bin/pi" ]] && export PATH="$_mise_node_bin:$PATH"
+  unset _mise_node_bin
+fi
 
 # eza aliases — only if installed
 if command -v eza >/dev/null 2>&1; then
@@ -40,7 +49,12 @@ command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
 command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
 # fzf: completion + Ctrl-T (files) and Alt-C (cd). Before atuin so atuin keeps Ctrl-R.
 command -v fzf >/dev/null 2>&1 && source <(fzf --zsh)
+{{- if ne .chezmoi.os "darwin" }}
+# atuin lands in ~/.atuin/bin via its install script on Linux, so its env shim is
+# needed there to put it on PATH. On macOS atuin comes from brew — sourcing the
+# shim would prepend ~/.atuin/bin and shadow the brew binary with a stale copy.
 [[ -f "$HOME/.atuin/bin/env" ]] && . "$HOME/.atuin/bin/env"
+{{- end }}
 command -v atuin >/dev/null 2>&1 && eval "$(atuin init zsh)"
 
 # LS_COLORS via vivid
@@ -49,8 +63,8 @@ command -v vivid >/dev/null 2>&1 && export LS_COLORS="$(vivid generate catppucci
 # PAI alias — no-op if not installed
 [[ -f "$HOME/.claude/PAI/Tools/pai.ts" ]] && alias pai='bun "$HOME/.claude/PAI/Tools/pai.ts"'
 
-# nvim: kickstart variant via NVIM_APPNAME (separate config from LazyVim)
-alias vik='NVIM_APPNAME=nvim-kickstart nvim'
+# nvim: from-scratch learning config via NVIM_APPNAME (separate config from LazyVim)
+alias vik='NVIM_APPNAME=nvim-lpl nvim'
 
 # sessionizer: Ctrl-f -> fzf-pick a project and switch to its zellij session
 _sessionizer() { BUFFER="sessionizer"; zle accept-line; }
@@ -59,11 +73,27 @@ bindkey '^f' _sessionizer
 # zsh-vi-mode resets keymaps on init; re-apply through its hook so the bind sticks.
 zvm_after_init_commands+=('bindkey "^f" _sessionizer')
 
-# zellij: auto-attach a session for interactive shells.
-# Skips VSCode's integrated terminal and nested sessions; ZELLIJ_AUTO_EXIT
-# closes the shell when you exit zellij. Must stay last — it execs zellij.
-if command -v zellij >/dev/null 2>&1 && [[ -z "$ZELLIJ" && "$TERM_PROGRAM" != "vscode" ]]; then
-  export ZELLIJ_AUTO_ATTACH=true
-  export ZELLIJ_AUTO_EXIT=true
-  eval "$(zellij setup --generate-auto-start zsh)"
-fi
+# zellij: NO auto-start (removed 2026-07). A bare shell stays a bare shell, so
+# there's no always-on zellij server repainting Ghostty and burning energy.
+# Enter zellij deliberately via the sessionizer (Ctrl-f) — that's the single
+# front door to a named project session.
+
+# research: a notes/research workspace (nvim + Claude side-by-side over the
+# ~/secondBrain vault, plus a shell) in its own "research" session. Mirrors the
+# sessionizer's attach-or-create logic, inside or outside zellij.
+research() {
+  local dir="$HOME/secondBrain" name=research
+  if [[ -n "${ZELLIJ:-}" ]]; then
+    if zellij list-sessions -ns 2>/dev/null | grep -qx "$name"; then
+      zellij action switch-session "$name"
+    else
+      zellij action switch-session --cwd "$dir" --layout "$name" "$name"
+    fi
+  elif zellij list-sessions -ns 2>/dev/null | grep -qx "$name"; then
+    zellij attach "$name"
+  else
+    # -n/--new-session-with-layout, not --layout: with --session the latter is
+    # read as "add tabs to existing session" and fails cold-start.
+    (cd "$dir" && zellij --session "$name" --new-session-with-layout "$name")
+  fi
+}

@@ -27,11 +27,6 @@ if [[ "$OS" == "Darwin" ]]; then
   fi
   export PATH="$HOME/.bun/bin:$PATH"
 
-  # opencode
-  if ! command -v opencode >/dev/null 2>&1 && [[ ! -f "$HOME/.opencode/bin/opencode" ]]; then
-    curl -fsSL https://opencode.ai/install | sh
-  fi
-
   # Claude Code
   command -v claude >/dev/null 2>&1 || bun install --global @anthropic-ai/claude-code
 
@@ -50,6 +45,10 @@ if [[ "$OS" == "Darwin" ]]; then
         cp -R "$TMP/mnt/"*.app /Applications/
         hdiutil detach "$TMP/mnt" -quiet
         rm -rf "$TMP"
+        # Belt-and-suspenders: cp -R preserves xattrs, so if the mounted dmg carried
+        # com.apple.quarantine, the copied .app would too, triggering Gatekeeper's
+        # "downloaded from the internet" prompt on first launch.
+        xattr -dr com.apple.quarantine /Applications/OpenWhispr.app 2>/dev/null || true
       fi
     fi
 
@@ -142,11 +141,6 @@ elif command -v pacman >/dev/null 2>&1; then
     curl -fsSL https://bun.sh/install | bash
   fi
   export PATH="$HOME/.bun/bin:$PATH"
-
-  # opencode
-  if ! command -v opencode >/dev/null 2>&1 && [[ ! -f "$HOME/.opencode/bin/opencode" ]]; then
-    curl -fsSL https://opencode.ai/install | sh
-  fi
 
   # Claude Code
   command -v claude >/dev/null 2>&1 || bun install --global @anthropic-ai/claude-code
@@ -322,11 +316,6 @@ elif command -v apt-get >/dev/null 2>&1; then
     curl -fsSL https://bun.sh/install | bash
   fi
   export PATH="$HOME/.bun/bin:$PATH"
-
-  # opencode
-  if ! command -v opencode >/dev/null 2>&1 && [[ ! -f "$HOME/.opencode/bin/opencode" ]]; then
-    curl -fsSL https://opencode.ai/install | sh
-  fi
 
   # Claude Code
   command -v claude >/dev/null 2>&1 || bun install --global @anthropic-ai/claude-code

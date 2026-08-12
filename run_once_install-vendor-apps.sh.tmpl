@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+# No set -e: optional installs failing should warn, not abort the session.
+#
+# Installs GUI apps directly from their vendor's own download endpoint instead of
+# via Homebrew cask. Candidates for this file: apps that self-update outside brew's
+# knowledge AND whose vendor doesn't treat Homebrew as a first-class install method,
+# plus a couple with a genuine Homebrew-cask metadata gap (see the Brewfile-cask
+# audit this was derived from). Little Snitch was considered and rejected — it ships
+# an installer requiring interactive system-extension approval + reboot, so it stays
+# a Homebrew cask (see Brewfile.tmpl). Fetch URLs were live-verified; vendors can
+# still change them — if a block silently no-ops, check the URL first.
+
+[[ "$(uname -s)" == "Darwin" ]] || exit 0
+
+IS_PERSONAL={{ if .is_personal }}true{{ else }}false{{ end }}
+UA="Mozilla/5.0"
+
+# $1 = download URL, $2 = target bundle name e.g. "App.app" (quote if it has spaces)
+fetch_dmg_app() {
+  local url="$1" app="$2"
+  [[ -z "$url" ]] && { echo "  ! no URL resolved for $app — skipping" >&2; return 1; }
+  [[ -d "/Applications/$app" ]] && return 0
+  local tmp; tmp=$(mktemp -d)
+  curl -fsSL -A "$UA" "$url" -o "$tmp/app.dmg" \
+    || { echo "  ! fetch failed: $app ($url)" >&2; rm -rf "$tmp"; return 1; }
+  hdiutil attach "$tmp/app.dmg" -mountpoint "$tmp/mnt" -quiet \
+    || { echo "  ! mount failed: $app" >&2; rm -rf "$tmp"; return 1; }
+  cp -R "$tmp/mnt/"*.app /Applications/
+  hdiutil detach "$tmp/mnt" -quiet
+  rm -rf "$tmp"
+  xattr -dr com.apple.quarantine "/Applications/$app" 2>/dev/null || true
+}
+
+# $1 = download URL, $2 = target bundle name e.g. "App.app"
+fetch_zip_app() {
+  local url="$1" app="$2"
+  [[ -z "$url" ]] && { echo "  ! no URL resolved for $app — skipping" >&2; return 1; }
+  [[ -d "/Applications/$app" ]] && return 0
+  local tmp; tmp=$(mktemp -d)
+  curl -fsSL -A "$UA" "$url" -o "$tmp/app.zip" \
+    || { echo "  ! fetch failed: $app ($url)" >&2; rm -rf "$tmp"; return 1; }
+  ditto -x -k "$tmp/app.zip" "$tmp/unz"
+  cp -R "$tmp/unz/"*.app /Applications/
+  rm -rf "$tmp"
+  xattr -dr com.apple.quarantine "/Applications/$app" 2>/dev/null || true
+}
+
+# ── All machines ─────────────────────────────────────────────────────────────
+
+# Vivaldi — Sparkle appcast for current version, then the vendor's versioned dmg
+VIVALDI_VER=$(curl -fsSL "https://update.vivaldi.com/update/1.0/public/mac/appcast.xml" \
+  | grep -oE '<sparkle:version>[^<]+' | head -1 | sed 's/<sparkle:version>//')
+fetch_dmg_app "https://downloads.vivaldi.com/stable/Vivaldi.${VIVALDI_VER}.universal.dmg" "Vivaldi.app"
+
+# Ollama — open source, GitHub's "latest" alias is stable and universal
+fetch_dmg_app "https://github.com/ollama/ollama/releases/latest/download/Ollama.dmg" "Ollama.app"
+
+# Claude (Anthropic desktop app) — stable URL, arch-specific
+CLAUDE_ARCH=$([[ "$(uname -m)" == "arm64" ]] && echo mac-arm64 || echo mac-x64)
+fetch_dmg_app "https://downloads.claude.ai/claude-science/latest/${CLAUDE_ARCH}.dmg" "Claude.app"
+
+# Bartender 6 — vendor maintains a stable "B6Latest" alias
+fetch_dmg_app "https://downloads.macbartender.com/B2/updates/B6Latest/Bartender%206.dmg" "Bartender 6.app"
+
+# CleanShot X — no stable vendor URL or working appcast; resolve current version via
+# Homebrew's public cask JSON API (read-only data feed, not a brew dependency), then
+# fetch the actual binary straight from the vendor's own CDN.
+CLEANSHOT_URL=$(curl -fsSL "https://formulae.brew.sh/api/cask/cleanshot.json" | jq -r '.url // empty')
+fetch_dmg_app "$CLEANSHOT_URL" "CleanShot X.app"
+
+# AlDente — open source, GitHub releases
+ALDENTE_URL=$(curl -fsSL "https://api.github.com/repos/AppHouseKitchen/AlDente-Charge-Limiter/releases/latest" \
+  | grep "browser_download_url.*\.dmg" | cut -d'"' -f4 | head -1)
+fetch_dmg_app "$ALDENTE_URL" "AlDente.app"
+
+# ForkLift — vendor maintains a stable major-version zip alias, no resolve needed
+fetch_zip_app "https://download.binarynights.com/ForkLift/ForkLift4.zip" "ForkLift.app"
+
+# superwhisper — Sparkle appcast for the current build URL (bundle name is lowercase)
+SW_URL=$(curl -fsSL -A "$UA" "https://superwhisper.com/appcast.xml" \
+  | grep -Eo 'url="https://builds\.superwhisper\.com/[^"]*\.zip"' | head -1 | cut -d'"' -f2)
+fetch_zip_app "$SW_URL" "superwhisper.app"
+
+# Obsidian — GitHub releases
+OBSIDIAN_URL=$(curl -fsSL "https://api.github.com/repos/obsidianmd/obsidian-releases/releases/latest" \
+  | grep "browser_download_url.*\.dmg" | cut -d'"' -f4 | head -1)
+fetch_dmg_app "$OBSIDIAN_URL" "Obsidian.app"
+
+# ── Personal machines only ───────────────────────────────────────────────────
+if [[ "$IS_PERSONAL" == "true" ]]; then
+
+  # 1Password — stable pkg URL, but it's a pkg (not a drag-install dmg), so it
+  # doesn't fit fetch_dmg_app; pkg installs are signed+notarized and self-clear
+  # quarantine, no xattr step needed. Needs sudo — may prompt on first run.
+  if [[ ! -d "/Applications/1Password.app" ]]; then
+    TMP=$(mktemp -d)
+    curl -fsSL "https://downloads.1password.com/mac/1Password.pkg" -o "$TMP/1Password.pkg" \
+      && sudo installer -pkg "$TMP/1Password.pkg" -target / \
+      || echo "  ! 1Password install failed — install manually" >&2
+    rm -rf "$TMP"
+  fi
+
+  # JetBrains Toolbox — official JSON version API, arch-specific
+  JETBRAINS_ARCH=$([[ "$(uname -m)" == "arm64" ]] && echo macM1 || echo mac)
+  JETBRAINS_URL=$(curl -fsSL "https://data.services.jetbrains.com/products/releases?code=TBA&latest=true&type=release" \
+    | jq -r ".TBA[0].downloads.${JETBRAINS_ARCH}.link // empty")
+  fetch_dmg_app "$JETBRAINS_URL" "JetBrains Toolbox.app"
+
+  # Figma — stable universal dmg URL
+  fetch_dmg_app "https://desktop.figma.com/mac/Figma.dmg" "Figma.app"
+
+  # Notion — stable URL, 307-redirects to the current versioned dmg (curl -L follows it)
+  fetch_dmg_app "https://www.notion.so/desktop/mac/download" "Notion.app"
+
+  # Signal — no stable dmg URL, but a stable version-check YAML to resolve it from
+  SIGNAL_VER=$(curl -fsSL "https://updates.signal.org/desktop/latest-mac.yml" \
+    | grep '^version:' | cut -d' ' -f2 | tr -d '\r')
+  fetch_dmg_app "https://updates.signal.org/desktop/signal-desktop-mac-universal-${SIGNAL_VER}.dmg" "Signal.app"
+
+  # Qobuz — no stable URL or working appcast; scrape the official apps page for the
+  # current versioned dmg link (arch-specific)
+  QOBUZ_ARCH=$([[ "$(uname -m)" == "arm64" ]] && echo arm64 || echo x64)
+  QOBUZ_URL=$(curl -fsSL -A "$UA" "https://www.qobuz.com/us-en/discover/apps-qobuz" \
+    | grep -oE "https://desktop\.qobuz\.com/releases/darwin/${QOBUZ_ARCH}/[^\"' ]*/Qobuz\.dmg" | head -1)
+  fetch_dmg_app "$QOBUZ_URL" "Qobuz.app"
+
+fi
