@@ -15,6 +15,12 @@
 IS_PERSONAL={{ if .is_personal }}true{{ else }}false{{ end }}
 UA="Mozilla/5.0"
 
+# Already installed? Version resolution below hits the network (appcasts, GitHub
+# APIs, page scrapes), and this script re-runs on every edit to it because chezmoi
+# keys run_once_ on the rendered script hash. Gate the *resolution*, not just the
+# download, so a repeat apply costs nothing.
+have_app() { [[ -d "/Applications/$1" ]]; }
+
 # $1 = download URL, $2 = target bundle name e.g. "App.app" (quote if it has spaces)
 fetch_dmg_app() {
   local url="$1" app="$2"
@@ -48,9 +54,11 @@ fetch_zip_app() {
 # ── All machines ─────────────────────────────────────────────────────────────
 
 # Vivaldi — Sparkle appcast for current version, then the vendor's versioned dmg
-VIVALDI_VER=$(curl -fsSL "https://update.vivaldi.com/update/1.0/public/mac/appcast.xml" \
-  | grep -oE '<sparkle:version>[^<]+' | head -1 | sed 's/<sparkle:version>//')
-fetch_dmg_app "https://downloads.vivaldi.com/stable/Vivaldi.${VIVALDI_VER}.universal.dmg" "Vivaldi.app"
+if ! have_app "Vivaldi.app"; then
+  VIVALDI_VER=$(curl -fsSL "https://update.vivaldi.com/update/1.0/public/mac/appcast.xml" \
+    | grep -oE '<sparkle:version>[^<]+' | head -1 | sed 's/<sparkle:version>//')
+  fetch_dmg_app "https://downloads.vivaldi.com/stable/Vivaldi.${VIVALDI_VER}.universal.dmg" "Vivaldi.app"
+fi
 
 # Ollama — open source, GitHub's "latest" alias is stable and universal
 fetch_dmg_app "https://github.com/ollama/ollama/releases/latest/download/Ollama.dmg" "Ollama.app"
@@ -65,26 +73,34 @@ fetch_dmg_app "https://downloads.macbartender.com/B2/updates/B6Latest/Bartender%
 # CleanShot X — no stable vendor URL or working appcast; resolve current version via
 # Homebrew's public cask JSON API (read-only data feed, not a brew dependency), then
 # fetch the actual binary straight from the vendor's own CDN.
-CLEANSHOT_URL=$(curl -fsSL "https://formulae.brew.sh/api/cask/cleanshot.json" | jq -r '.url // empty')
-fetch_dmg_app "$CLEANSHOT_URL" "CleanShot X.app"
+if ! have_app "CleanShot X.app"; then
+  CLEANSHOT_URL=$(curl -fsSL "https://formulae.brew.sh/api/cask/cleanshot.json" | jq -r '.url // empty')
+  fetch_dmg_app "$CLEANSHOT_URL" "CleanShot X.app"
+fi
 
 # AlDente — open source, GitHub releases
-ALDENTE_URL=$(curl -fsSL "https://api.github.com/repos/AppHouseKitchen/AlDente-Charge-Limiter/releases/latest" \
-  | grep "browser_download_url.*\.dmg" | cut -d'"' -f4 | head -1)
-fetch_dmg_app "$ALDENTE_URL" "AlDente.app"
+if ! have_app "AlDente.app"; then
+  ALDENTE_URL=$(curl -fsSL "https://api.github.com/repos/AppHouseKitchen/AlDente-Charge-Limiter/releases/latest" \
+    | grep "browser_download_url.*\.dmg" | cut -d'"' -f4 | head -1)
+  fetch_dmg_app "$ALDENTE_URL" "AlDente.app"
+fi
 
 # ForkLift — vendor maintains a stable major-version zip alias, no resolve needed
 fetch_zip_app "https://download.binarynights.com/ForkLift/ForkLift4.zip" "ForkLift.app"
 
 # superwhisper — Sparkle appcast for the current build URL (bundle name is lowercase)
-SW_URL=$(curl -fsSL -A "$UA" "https://superwhisper.com/appcast.xml" \
-  | grep -Eo 'url="https://builds\.superwhisper\.com/[^"]*\.zip"' | head -1 | cut -d'"' -f2)
-fetch_zip_app "$SW_URL" "superwhisper.app"
+if ! have_app "superwhisper.app"; then
+  SW_URL=$(curl -fsSL -A "$UA" "https://superwhisper.com/appcast.xml" \
+    | grep -Eo 'url="https://builds\.superwhisper\.com/[^"]*\.zip"' | head -1 | cut -d'"' -f2)
+  fetch_zip_app "$SW_URL" "superwhisper.app"
+fi
 
 # Obsidian — GitHub releases
-OBSIDIAN_URL=$(curl -fsSL "https://api.github.com/repos/obsidianmd/obsidian-releases/releases/latest" \
-  | grep "browser_download_url.*\.dmg" | cut -d'"' -f4 | head -1)
-fetch_dmg_app "$OBSIDIAN_URL" "Obsidian.app"
+if ! have_app "Obsidian.app"; then
+  OBSIDIAN_URL=$(curl -fsSL "https://api.github.com/repos/obsidianmd/obsidian-releases/releases/latest" \
+    | grep "browser_download_url.*\.dmg" | cut -d'"' -f4 | head -1)
+  fetch_dmg_app "$OBSIDIAN_URL" "Obsidian.app"
+fi
 
 # ── Personal machines only ───────────────────────────────────────────────────
 if [[ "$IS_PERSONAL" == "true" ]]; then
@@ -101,10 +117,12 @@ if [[ "$IS_PERSONAL" == "true" ]]; then
   fi
 
   # JetBrains Toolbox — official JSON version API, arch-specific
-  JETBRAINS_ARCH=$([[ "$(uname -m)" == "arm64" ]] && echo macM1 || echo mac)
-  JETBRAINS_URL=$(curl -fsSL "https://data.services.jetbrains.com/products/releases?code=TBA&latest=true&type=release" \
-    | jq -r ".TBA[0].downloads.${JETBRAINS_ARCH}.link // empty")
-  fetch_dmg_app "$JETBRAINS_URL" "JetBrains Toolbox.app"
+  if ! have_app "JetBrains Toolbox.app"; then
+    JETBRAINS_ARCH=$([[ "$(uname -m)" == "arm64" ]] && echo macM1 || echo mac)
+    JETBRAINS_URL=$(curl -fsSL "https://data.services.jetbrains.com/products/releases?code=TBA&latest=true&type=release" \
+      | jq -r ".TBA[0].downloads.${JETBRAINS_ARCH}.link // empty")
+    fetch_dmg_app "$JETBRAINS_URL" "JetBrains Toolbox.app"
+  fi
 
   # Figma — stable universal dmg URL
   fetch_dmg_app "https://desktop.figma.com/mac/Figma.dmg" "Figma.app"
@@ -113,15 +131,19 @@ if [[ "$IS_PERSONAL" == "true" ]]; then
   fetch_dmg_app "https://www.notion.so/desktop/mac/download" "Notion.app"
 
   # Signal — no stable dmg URL, but a stable version-check YAML to resolve it from
-  SIGNAL_VER=$(curl -fsSL "https://updates.signal.org/desktop/latest-mac.yml" \
-    | grep '^version:' | cut -d' ' -f2 | tr -d '\r')
-  fetch_dmg_app "https://updates.signal.org/desktop/signal-desktop-mac-universal-${SIGNAL_VER}.dmg" "Signal.app"
+  if ! have_app "Signal.app"; then
+    SIGNAL_VER=$(curl -fsSL "https://updates.signal.org/desktop/latest-mac.yml" \
+      | grep '^version:' | cut -d' ' -f2 | tr -d '\r')
+    fetch_dmg_app "https://updates.signal.org/desktop/signal-desktop-mac-universal-${SIGNAL_VER}.dmg" "Signal.app"
+  fi
 
   # Qobuz — no stable URL or working appcast; scrape the official apps page for the
   # current versioned dmg link (arch-specific)
-  QOBUZ_ARCH=$([[ "$(uname -m)" == "arm64" ]] && echo arm64 || echo x64)
-  QOBUZ_URL=$(curl -fsSL -A "$UA" "https://www.qobuz.com/us-en/discover/apps-qobuz" \
-    | grep -oE "https://desktop\.qobuz\.com/releases/darwin/${QOBUZ_ARCH}/[^\"' ]*/Qobuz\.dmg" | head -1)
-  fetch_dmg_app "$QOBUZ_URL" "Qobuz.app"
+  if ! have_app "Qobuz.app"; then
+    QOBUZ_ARCH=$([[ "$(uname -m)" == "arm64" ]] && echo arm64 || echo x64)
+    QOBUZ_URL=$(curl -fsSL -A "$UA" "https://www.qobuz.com/us-en/discover/apps-qobuz" \
+      | grep -oE "https://desktop\.qobuz\.com/releases/darwin/${QOBUZ_ARCH}/[^\"' ]*/Qobuz\.dmg" | head -1)
+    fetch_dmg_app "$QOBUZ_URL" "Qobuz.app"
+  fi
 
 fi

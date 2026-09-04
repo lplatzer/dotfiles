@@ -4,6 +4,29 @@
 OS="$(uname -s)"
 IS_PERSONAL={{ if .is_personal }}true{{ else }}false{{ end }}
 
+# ── Idempotency helpers ──────────────────────────────────────────────────────
+# chezmoi keys run_once_ scripts on the *rendered* script hash, so any edit to
+# this file re-runs it on every machine. Steps below must therefore be safe to
+# re-run. Steps that are genuinely once-per-machine (system upgrades, index
+# refreshes) are wrapped in `once <id> -- <cmd...>`, which drops a marker under
+# $ONCE_DIR and skips on later applies. A failing step leaves no marker, so it
+# is retried next time.
+ONCE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/chezmoi-once"
+mkdir -p "$ONCE_DIR"
+
+once() {
+  local id="$1"; shift
+  [[ "${1:-}" == "--" ]] && shift
+  [[ -e "$ONCE_DIR/$id" ]] && return 0
+  "$@" && touch "$ONCE_DIR/$id"
+}
+
+# Declarative global runtime pin: skip the mise round-trip if already satisfied.
+mise_global() {
+  local spec="$1" tool="${1%%@*}"
+  mise ls --global 2>/dev/null | grep -q "^${tool}[[:space:]]" || mise use --global "$spec"
+}
+
 # ── macOS ────────────────────────────────────────────────────────────────────
 # Homebrew + brew bundle live in run_onchange_before_install-brew.sh.tmpl (tracks Brewfile
 # changes independently so edits here don't trigger a full brew bundle re-run).
@@ -11,9 +34,9 @@ if [[ "$OS" == "Darwin" ]]; then
 
   # mise: activate and install runtimes (mise installed via Brewfile)
   eval "$(mise activate bash)"
-  mise use --global node@lts
-  mise use --global python@latest
-  mise use --global zig@latest
+  mise_global node@lts
+  mise_global python@latest
+  mise_global zig@latest
 
   # rustup: initialise stable toolchain so cargo is available
   command -v rustup >/dev/null 2>&1 && rustup default stable 2>/dev/null || true
@@ -68,7 +91,7 @@ elif command -v pacman >/dev/null 2>&1; then
 
   [[ "$SHELL" != "$(which zsh)" ]] && chsh -s "$(which zsh)" || true
 
-  sudo pacman -Syu --noconfirm
+  once pacman-syu -- sudo pacman -Syu --noconfirm
   sudo pacman -S --noconfirm --needed \
     zsh ghostty git wget curl chezmoi mise \
     zellij eza zoxide atuin starship vivid \
@@ -128,8 +151,8 @@ elif command -v pacman >/dev/null 2>&1; then
   # mise: install runtimes
   if command -v mise >/dev/null 2>&1; then
     eval "$(mise activate bash)" 2>/dev/null || true
-    mise use --global node@lts
-    mise use --global python@latest
+    mise_global node@lts
+    mise_global python@latest
   fi
 
   if command -v npm >/dev/null 2>&1; then
@@ -188,7 +211,7 @@ elif command -v apt-get >/dev/null 2>&1; then
   # branch. CachyOS (pacman branch) is the graphical target; the apt branch covers
   # Debian/Ubuntu/WSL, which are headless/server, and Debian's Hyprland lags badly.
 
-  sudo apt-get update -qq
+  once apt-update -- sudo apt-get update -qq
   sudo apt-get install -y --no-install-recommends \
     git wget curl build-essential gpg zsh \
     fzf fd-find ripgrep \
@@ -270,10 +293,10 @@ elif command -v apt-get >/dev/null 2>&1; then
   fi
   export PATH="$HOME/.local/bin:$PATH"
   eval "$(mise activate bash)"
-  mise use --global node@lts
-  mise use --global python@latest
-  mise use --global zig@latest
-  mise use --global pnpm@latest
+  mise_global node@lts
+  mise_global python@latest
+  mise_global zig@latest
+  mise_global pnpm@latest
   command -v tree-sitter >/dev/null 2>&1 || npm install -g tree-sitter-cli
 
   # uv (Python package manager / project tool)
