@@ -21,10 +21,12 @@ once() {
   "$@" && touch "$ONCE_DIR/$id"
 }
 
-# Declarative global runtime pin: skip the mise round-trip if already satisfied.
-mise_global() {
-  local spec="$1" tool="${1%%@*}"
-  mise ls --global 2>/dev/null | grep -q "^${tool}[[:space:]]" || mise use --global "$spec"
+# Global mise tools from ~/.config/mise/config.toml (chezmoi-managed, pinned; chezmoi
+# writes it before this script runs). Its hash makes chezmoi re-run this script when a
+# pin changes: {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
+mise_install() {
+  MISE_YES=1 mise install || echo "mise install reported failures — rerun: mise install" >&2
+  export PATH="${XDG_DATA_HOME:-$HOME/.local/share}/mise/shims:$PATH"
 }
 
 # Claude Code, Codex CLI and pnpm from their vendors' own installers, never npm -g.
@@ -50,17 +52,13 @@ vendor_clis() {
 # changes independently so edits here don't trigger a full brew bundle re-run).
 if [[ "$OS" == "Darwin" ]]; then
 
-  # mise: activate and install runtimes (mise installed via Brewfile)
-  eval "$(mise activate bash)"
-  mise_global node@24
-  mise_global python@latest
-  mise_global zig@latest
+  export PATH="$HOME/.local/bin:$PATH"
 
-  # rustup: initialise stable toolchain so cargo is available
-  command -v rustup >/dev/null 2>&1 && rustup default stable 2>/dev/null || true
-
-  # ty — Astral Python type checker / LSP (alpha), used by Neovim's basedpyright+ty setup
-  command -v ty >/dev/null 2>&1 || uv tool install ty
+  # mise — its own installer (~/.local/bin/mise; `mise self-update`). It only prints
+  # activation hints; ~/.zshrc already activates it. Then the pinned CLIs and runtimes.
+  command -v mise >/dev/null 2>&1 || curl -fsSL https://mise.run | sh \
+    || echo "mise install failed — rerun: curl -fsSL https://mise.run | sh" >&2
+  mise_install
 
   vendor_clis
 
@@ -128,12 +126,8 @@ elif command -v pacman >/dev/null 2>&1; then
     command -v ty >/dev/null 2>&1 || uv tool install ty
   fi
 
-  # mise: install runtimes
-  if command -v mise >/dev/null 2>&1; then
-    eval "$(mise activate bash)" 2>/dev/null || true
-    mise_global node@24
-    mise_global python@latest
-  fi
+  # mise (from pacman): the pinned runtimes in ~/.config/mise/config.toml
+  command -v mise >/dev/null 2>&1 && mise_install
 
   vendor_clis
 

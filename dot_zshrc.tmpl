@@ -36,13 +36,11 @@ if command -v eza >/dev/null 2>&1; then
   alias lt='eza --tree'
 fi
 
-# Antidote
-{{ if eq .chezmoi.os "darwin" }}
-source "$(brew --prefix)/opt/antidote/share/antidote/antidote.zsh"
-{{ else }}
-source "$HOME/.antidote/antidote.zsh"
-{{ end }}
-antidote load
+# Antidote (git clone in ~/.antidote, from run_once_install-antidote.sh)
+if [[ -f "$HOME/.antidote/antidote.zsh" ]]; then
+  source "$HOME/.antidote/antidote.zsh"
+  antidote load
+fi
 
 # Shell integrations
 command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"

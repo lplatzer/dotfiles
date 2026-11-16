@@ -1,89 +1,134 @@
 #!/usr/bin/env bash
 # No set -e: optional installs failing should warn, not abort the session.
 #
-# Installs GUI apps directly from their vendor's own download endpoint instead of
-# via Homebrew cask. Candidates for this file: apps that self-update outside brew's
-# knowledge AND whose vendor doesn't treat Homebrew as a first-class install method,
-# plus a couple with a genuine Homebrew-cask metadata gap (see the Brewfile-cask
-# audit this was derived from). Little Snitch was considered and rejected — it ships
-# an installer requiring interactive system-extension approval + reboot, so it stays
-# a Homebrew cask (see Brewfile.tmpl). Fetch URLs were live-verified; vendors can
-# still change them — if a block silently no-ops, check the URL first.
+# macOS GUI apps and the font, straight from each vendor's own download endpoint or
+# update feed (Homebrew only for AeroSpace, see Brewfile.tmpl). The app list follows
+# the app matrix: everything above the personal block goes on every Mac.
+#
+# Not here, on purpose:
+# - Rex and Affinity: manual, through the fresh-machine wizard (Rex's install command
+#   must never be in this public repo; Affinity needs a Canva sign-in).
+# - Wireshark: installed on demand.
+# - CLIs (incl. 1Password CLI): pinned in ~/.config/mise/config.toml.
+#
+# Apps update themselves after this first install; nothing here is pinned.
 
 [[ "$(uname -s)" == "Darwin" ]] || exit 0
 
 IS_PERSONAL={{ if .is_personal }}true{{ else }}false{{ end }}
 UA="Mozilla/5.0"
+# mas comes from mise (run_once_install-tools runs before this script).
+export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
 
 # Already installed? Version resolution below hits the network (appcasts, GitHub
 # APIs, page scrapes), and this script re-runs on every edit to it because chezmoi
 # keys run_once_ on the rendered script hash. Gate the *resolution*, not just the
 # download, so a repeat apply costs nothing.
 have_app() { [[ -d "/Applications/$1" ]]; }
+warn() { echo "  ! $*" >&2; }
+
+# Copy every .app from a directory into /Applications and clear quarantine.
+install_apps_from() {
+  local dir="$1" app="$2"
+  cp -R "$dir/"*.app /Applications/ || { warn "copy failed: $app"; return 1; }
+  xattr -dr com.apple.quarantine "/Applications/$app" 2>/dev/null || true
+}
 
 # $1 = download URL, $2 = target bundle name e.g. "App.app" (quote if it has spaces)
 fetch_dmg_app() {
   local url="$1" app="$2"
-  [[ -z "$url" ]] && { echo "  ! no URL resolved for $app — skipping" >&2; return 1; }
-  [[ -d "/Applications/$app" ]] && return 0
+  [[ -z "$url" ]] && { warn "no URL resolved for $app — skipping"; return 1; }
+  have_app "$app" && return 0
   local tmp; tmp=$(mktemp -d)
-  curl -fsSL -A "$UA" "$url" -o "$tmp/app.dmg" \
-    || { echo "  ! fetch failed: $app ($url)" >&2; rm -rf "$tmp"; return 1; }
-  hdiutil attach "$tmp/app.dmg" -mountpoint "$tmp/mnt" -quiet \
-    || { echo "  ! mount failed: $app" >&2; rm -rf "$tmp"; return 1; }
-  cp -R "$tmp/mnt/"*.app /Applications/
+  curl -fsSL -A "$UA" "$url" -o "$tmp/app.dmg" || { warn "fetch failed: $app ($url)"; rm -rf "$tmp"; return 1; }
+  hdiutil attach "$tmp/app.dmg" -nobrowse -readonly -mountpoint "$tmp/mnt" -quiet \
+    || { warn "mount failed: $app"; rm -rf "$tmp"; return 1; }
+  install_apps_from "$tmp/mnt" "$app"
   hdiutil detach "$tmp/mnt" -quiet
   rm -rf "$tmp"
-  xattr -dr com.apple.quarantine "/Applications/$app" 2>/dev/null || true
 }
 
-# $1 = download URL, $2 = target bundle name e.g. "App.app"
+# $1 = download URL, $2 = target bundle name
 fetch_zip_app() {
   local url="$1" app="$2"
-  [[ -z "$url" ]] && { echo "  ! no URL resolved for $app — skipping" >&2; return 1; }
-  [[ -d "/Applications/$app" ]] && return 0
+  [[ -z "$url" ]] && { warn "no URL resolved for $app — skipping"; return 1; }
+  have_app "$app" && return 0
   local tmp; tmp=$(mktemp -d)
-  curl -fsSL -A "$UA" "$url" -o "$tmp/app.zip" \
-    || { echo "  ! fetch failed: $app ($url)" >&2; rm -rf "$tmp"; return 1; }
-  ditto -x -k "$tmp/app.zip" "$tmp/unz"
-  cp -R "$tmp/unz/"*.app /Applications/
+  curl -fsSL -A "$UA" "$url" -o "$tmp/app.zip" || { warn "fetch failed: $app ($url)"; rm -rf "$tmp"; return 1; }
+  ditto -x -k "$tmp/app.zip" "$tmp/unz" && install_apps_from "$tmp/unz" "$app"
   rm -rf "$tmp"
-  xattr -dr com.apple.quarantine "/Applications/$app" 2>/dev/null || true
 }
 
-# ── All machines ─────────────────────────────────────────────────────────────
+# $1 = download URL (.tar.gz), $2 = target bundle name
+fetch_tgz_app() {
+  local url="$1" app="$2"
+  [[ -z "$url" ]] && { warn "no URL resolved for $app — skipping"; return 1; }
+  have_app "$app" && return 0
+  local tmp; tmp=$(mktemp -d)
+  mkdir -p "$tmp/unz"
+  curl -fsSL -A "$UA" "$url" | tar -xzf - -C "$tmp/unz" && install_apps_from "$tmp/unz" "$app" \
+    || warn "fetch failed: $app ($url)"
+  rm -rf "$tmp"
+}
 
-# Ollama — open source, GitHub's "latest" alias is stable and universal
-fetch_dmg_app "https://github.com/ollama/ollama/releases/latest/download/Ollama.dmg" "Ollama.app"
+# $1 = download URL (.pkg), $2 = bundle name the pkg installs. Needs sudo (prompts).
+fetch_pkg() {
+  local url="$1" app="$2"
+  have_app "$app" && return 0
+  local tmp; tmp=$(mktemp -d)
+  curl -fsSL -A "$UA" "$url" -o "$tmp/app.pkg" && sudo installer -pkg "$tmp/app.pkg" -target / \
+    || warn "install failed: $app ($url)"
+  rm -rf "$tmp"
+}
 
-# Claude (Anthropic desktop app) — stable URL, arch-specific
-CLAUDE_ARCH=$([[ "$(uname -m)" == "arm64" ]] && echo mac-arm64 || echo mac-x64)
-fetch_dmg_app "https://downloads.claude.ai/claude-science/latest/${CLAUDE_ARCH}.dmg" "Claude.app"
+# First enclosure URL of a Sparkle appcast matching $2 (an ERE), or the last one
+# when $3 is "last" (some feeds list oldest first).
+appcast_url() {
+  local urls; urls=$(curl -fsSL -A "$UA" "$1" | grep -oE "url=\"$2\"" | cut -d'"' -f2)
+  if [[ "${3:-}" == "last" ]]; then tail -1 <<<"$urls"; else head -1 <<<"$urls"; fi
+}
 
-# Bartender 6 — vendor maintains a stable "B6Latest" alias
-fetch_dmg_app "https://downloads.macbartender.com/B2/updates/B6Latest/Bartender%206.dmg" "Bartender 6.app"
+# Mac App Store app by id; needs an App Store sign-in (the wizard covers it).
+mas_app() {
+  local id="$1" app="$2"
+  have_app "$app" && return 0
+  command -v mas >/dev/null 2>&1 || { warn "mas missing — $app not installed"; return 1; }
+  mas get "$id" >/dev/null 2>&1 || mas install "$id" \
+    || warn "$app not installed — sign in to the App Store, then rerun"
+}
 
-# CleanShot X — no stable vendor URL or working appcast; resolve current version via
-# Homebrew's public cask JSON API (read-only data feed, not a brew dependency), then
-# fetch the actual binary straight from the vendor's own CDN.
-if ! have_app "CleanShot X.app"; then
-  CLEANSHOT_URL=$(curl -fsSL "https://formulae.brew.sh/api/cask/cleanshot.json" | jq -r '.url // empty')
-  fetch_dmg_app "$CLEANSHOT_URL" "CleanShot X.app"
+# ── Font ─────────────────────────────────────────────────────────────────────
+if ! ls "$HOME/Library/Fonts/"0xProtoNerdFont-*.ttf >/dev/null 2>&1; then
+  mkdir -p "$HOME/Library/Fonts"
+  curl -fsSL "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/0xProto.tar.xz" \
+    | tar -xJf - -C "$HOME/Library/Fonts" --include '*.ttf' \
+    || warn "0xProto Nerd Font install failed"
 fi
 
-# AlDente — open source, GitHub releases
-if ! have_app "AlDente.app"; then
-  ALDENTE_URL=$(curl -fsSL "https://api.github.com/repos/AppHouseKitchen/AlDente-Charge-Limiter/releases/latest" \
-    | grep "browser_download_url.*\.dmg" | cut -d'"' -f4 | head -1)
-  fetch_dmg_app "$ALDENTE_URL" "AlDente.app"
+# ── All Macs ─────────────────────────────────────────────────────────────────
+
+# Browsers
+fetch_dmg_app "https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg" "Google Chrome.app"
+fetch_dmg_app "https://github.com/zen-browser/desktop/releases/latest/download/zen.macos-universal.dmg" "Zen.app"
+
+# Claude desktop. The download page's redirect link answers curl with 403, so take
+# the current zip from the app's own update feed (Squirrel RELEASES.json).
+if ! have_app "Claude.app"; then
+  CLAUDE_URL=$(curl -fsSL -A "$UA" "https://downloads.claude.ai/releases/darwin/universal/RELEASES.json" | jq -r '.releases[0].updateTo.url // empty')
+  fetch_zip_app "$CLAUDE_URL" "Claude.app"
 fi
 
-# superwhisper — Sparkle appcast for the current build URL (bundle name is lowercase)
-if ! have_app "superwhisper.app"; then
-  SW_URL=$(curl -fsSL -A "$UA" "https://superwhisper.com/appcast.xml" \
-    | grep -Eo 'url="https://builds\.superwhisper\.com/[^"]*\.zip"' | head -1 | cut -d'"' -f2)
-  fetch_zip_app "$SW_URL" "superwhisper.app"
+# ChatGPT desktop (includes Codex) — the app's own Sparkle feed, newest first
+if ! have_app "ChatGPT.app"; then
+  CHATGPT_FEED=$([[ "$(uname -m)" == "arm64" ]] && echo appcast.xml || echo appcast-x64.xml)
+  fetch_zip_app "$(appcast_url "https://persistent.oaistatic.com/codex-app-prod/$CHATGPT_FEED" '[^"]*\.zip')" "ChatGPT.app"
 fi
+
+# VS Code — Microsoft's stable "latest" endpoint (a zip)
+fetch_zip_app "https://update.code.visualstudio.com/latest/darwin-universal/stable" "Visual Studio Code.app"
+
+# Ollama
+fetch_dmg_app "https://ollama.com/download/Ollama.dmg" "Ollama.app"
 
 # Obsidian — GitHub releases
 if ! have_app "Obsidian.app"; then
@@ -92,19 +137,86 @@ if ! have_app "Obsidian.app"; then
   fetch_dmg_app "$OBSIDIAN_URL" "Obsidian.app"
 fi
 
+# Alfred 5 — its update feed (a plist) names the current .tar.gz
+if ! have_app "Alfred 5.app"; then
+  ALFRED_URL=$(curl -fsSL "https://www.alfredapp.com/app/update5/general.xml" | plutil -extract location raw - 2>/dev/null)
+  fetch_tgz_app "$ALFRED_URL" "Alfred 5.app"
+fi
+
+# Menu bar, Dock and window tools
+fetch_dmg_app "https://github.com/ejbills/DockDoor/releases/latest/download/DockDoor.dmg" "DockDoor.app"
+fetch_dmg_app "https://github.com/linearmouse/linearmouse/releases/latest/download/LinearMouse.dmg" "LinearMouse.app"
+fetch_dmg_app "https://github.com/chrenn/swish-dl/releases/latest/download/Swish.dmg" "Swish.app"
+# Bartender 7 — zip; the Sparkle feed lists oldest first, so take the last entry
+have_app "Bartender 7.app" || fetch_zip_app \
+  "$(appcast_url "https://downloads.macbartender.com/Bartender7/updates/AppcastB7.xml" '[^"]*\.zip' last)" "Bartender 7.app"
+
+# CleanShot X — no public latest URL or current appcast; read the current vendor URL
+# from Homebrew's public cask JSON (a data feed, not a brew dependency), then fetch
+# from the vendor's own CDN.
+if ! have_app "CleanShot X.app"; then
+  CLEANSHOT_URL=$(curl -fsSL "https://formulae.brew.sh/api/cask/cleanshot.json" | jq -r '.url // empty')
+  fetch_dmg_app "$CLEANSHOT_URL" "CleanShot X.app"
+fi
+
+# AlDente — GitHub releases (Pro is the same app, unlocked by a licence). The vendor's
+# guide mentions a .pkg, but the release asset is still a dmg (1.40.1).
+if ! have_app "AlDente.app"; then
+  ALDENTE_URL=$(curl -fsSL "https://api.github.com/repos/AppHouseKitchen/AlDente-Battery_Care_and_Monitoring/releases/latest" \
+    | grep "browser_download_url.*\.dmg" | cut -d'"' -f4 | head -1)
+  fetch_dmg_app "$ALDENTE_URL" "AlDente.app"
+fi
+
+# superwhisper — Sparkle feed v2 (the old appcast.xml is stale); bundle name is lowercase
+have_app "superwhisper.app" || fetch_zip_app \
+  "$(appcast_url "https://builds.superwhisper.com/appcast-v2.xml" 'https://builds\.superwhisper\.com/[^"]*/superwhisper\.zip')" "superwhisper.app"
+
+# Input devices and keyboard layouts
+# Logi Options+ — the installer app in the zip, run silently (needs sudo)
+if ! have_app "logioptionsplus.app"; then
+  TMP=$(mktemp -d)
+  curl -fsSL "https://download01.logi.com/web/ftp/pub/techsupport/optionsplus/logioptionsplus_installer.zip" -o "$TMP/logi.zip" \
+    && ditto -x -k "$TMP/logi.zip" "$TMP/unz" \
+    && sudo "$TMP/unz/logioptionsplus_installer.app/Contents/MacOS/logioptionsplus_installer" --quiet \
+    || warn "Logi Options+ install failed"
+  rm -rf "$TMP"
+fi
+fetch_dmg_app "https://oryx.nyc3.cdn.digitaloceanspaces.com/keymapp/keymapp-latest.dmg" "Keymapp.app"
+have_app "Ukelele.app" || fetch_dmg_app \
+  "$(appcast_url "https://software.sil.org/downloads/r/ukelele/Ukelele_appcast.xml" '[^"]*\.dmg')" "Ukelele.app"
+
 # ── Personal machines only ───────────────────────────────────────────────────
 if [[ "$IS_PERSONAL" == "true" ]]; then
 
-  # 1Password — stable pkg URL, but it's a pkg (not a drag-install dmg), so it
-  # doesn't fit fetch_dmg_app; pkg installs are signed+notarized and self-clear
-  # quarantine, no xattr step needed. Needs sudo — may prompt on first run.
-  if [[ ! -d "/Applications/1Password.app" ]]; then
-    TMP=$(mktemp -d)
-    curl -fsSL "https://downloads.1password.com/mac/1Password.pkg" -o "$TMP/1Password.pkg" \
-      && sudo installer -pkg "$TMP/1Password.pkg" -target / \
-      || echo "  ! 1Password install failed — install manually" >&2
-    rm -rf "$TMP"
+  # 1Password — the versioned zip holds 1Password.app (no sudo, unlike the pkg; the
+  # page's unversioned 1Password.zip is only a GUI downloader). Version from
+  # 1Password's own update API.
+  if ! have_app "1Password.app"; then
+    OP_ARCH=$([[ "$(uname -m)" == "arm64" ]] && echo aarch64 || echo x86_64)
+    OP_VER=$(curl -fsSL "https://app-updates.agilebits.com/check/2/99/${OP_ARCH}/OPM8/en/0/A1/N" | jq -r '.version // empty')
+    [[ -n "$OP_VER" ]] && fetch_zip_app "https://downloads.1password.com/mac/1Password-${OP_VER}-${OP_ARCH}.zip" "1Password.app"
   fi
+
+  # Little Snitch — a drag-install dmg; the network filter and System Extension
+  # approvals come on first launch (the wizard walks through them)
+  if ! have_app "Little Snitch.app"; then
+    LS_URL=$(curl -fsSL -A "$UA" "https://www.obdev.at/products/littlesnitch/download.html" \
+      | grep -oE 'https://www\.obdev\.at/downloads/littlesnitch/LittleSnitch-[0-9.]+\.dmg' | sort -uV | tail -1)
+    fetch_dmg_app "$LS_URL" "Little Snitch.app"
+  fi
+
+  # Tailscale — the Standalone variant the vendor recommends (pkg, needs sudo)
+  fetch_pkg "https://pkgs.tailscale.com/stable/Tailscale-latest-macos.pkg" "Tailscale.app"
+
+  # iStat Menus 7 — stable link, redirects to the versioned zip
+  fetch_zip_app "https://download.istatmenus.app/istatmenus7/download/" "iStat Menus.app"
+
+  # Linear — stable URL serves the current universal dmg
+  fetch_dmg_app "https://releases.linear.app/mac" "Linear.app"
+
+  # Figma, Notion — stable URLs
+  fetch_dmg_app "https://desktop.figma.com/mac/Figma.dmg" "Figma.app"
+  fetch_dmg_app "https://www.notion.com/desktop/mac-universal/download" "Notion.app"
 
   # JetBrains Toolbox — official JSON version API, arch-specific
   if ! have_app "JetBrains Toolbox.app"; then
@@ -114,13 +226,16 @@ if [[ "$IS_PERSONAL" == "true" ]]; then
     fetch_dmg_app "$JETBRAINS_URL" "JetBrains Toolbox.app"
   fi
 
-  # Figma — stable universal dmg URL
-  fetch_dmg_app "https://desktop.figma.com/mac/Figma.dmg" "Figma.app"
+  # Android Studio — the release list JetBrains hosts for Google, newest first; stable
+  # builds are channel "Release" or "Patch"
+  if ! have_app "Android Studio.app"; then
+    AS_ARCH=$([[ "$(uname -m)" == "arm64" ]] && echo mac_arm || echo mac)
+    AS_URL=$(curl -fsSL "https://jb.gg/android-studio-releases-list.json" \
+      | jq -r --arg a "-${AS_ARCH}.dmg" '[.content.item[] | select(.channel == "Release" or .channel == "Patch")][0].download[] | select(.link | endswith($a)) | .link' | head -1)
+    fetch_dmg_app "$AS_URL" "Android Studio.app"
+  fi
 
-  # Notion — stable URL, 307-redirects to the current versioned dmg (curl -L follows it)
-  fetch_dmg_app "https://www.notion.so/desktop/mac/download" "Notion.app"
-
-  # Signal — no stable dmg URL, but a stable version-check YAML to resolve it from
+  # Signal — stable version-check YAML to resolve the dmg
   if ! have_app "Signal.app"; then
     SIGNAL_VER=$(curl -fsSL "https://updates.signal.org/desktop/latest-mac.yml" \
       | grep '^version:' | cut -d' ' -f2 | tr -d '\r')
@@ -135,5 +250,22 @@ if [[ "$IS_PERSONAL" == "true" ]]; then
       | grep -oE "https://desktop\.qobuz\.com/releases/darwin/${QOBUZ_ARCH}/[^\"' ]*/Qobuz\.dmg" | head -1)
     fetch_dmg_app "$QOBUZ_URL" "Qobuz.app"
   fi
+
+  # Ejectify — its Sparkle feed, newest first
+  have_app "Ejectify.app" || fetch_zip_app \
+    "$(appcast_url "https://ejectify.app/updates/appcast.xml" '[^"]*\.zip')" "Ejectify.app"
+
+  # Podman Desktop — GitHub releases, universal dmg
+  if ! have_app "Podman Desktop.app"; then
+    PODMAN_URL=$(curl -fsSL "https://api.github.com/repos/podman-desktop/podman-desktop/releases/latest" \
+      | grep -oE '"browser_download_url": *"[^"]*-universal\.dmg"' | cut -d'"' -f4 | head -1)
+    fetch_dmg_app "$PODMAN_URL" "Podman Desktop.app"
+  fi
+
+  # Mac App Store (the vendors' channel for these)
+  mas_app 1091675654 "Shapr3D.app"
+  mas_app 310633997  "WhatsApp.app"
+  mas_app 747648890  "Telegram.app"
+  mas_app 1661733229 "LocalSend.app"
 
 fi
