@@ -14,6 +14,10 @@ fi
 defaults write com.apple.dock autohide-delay -float 0
 defaults write com.apple.dock autohide-time-modifier -float 0
 
+# Windows: Ctrl+Cmd + drag anywhere in a window moves it (like Hyprland's mod+drag).
+# AeroSpace re-tiles a tiled window where it is dropped.
+defaults write NSGlobalDomain NSWindowShouldDragOnGesture -bool true
+
 # Finder
 defaults write com.apple.finder AppleShowAllFiles true
 defaults write com.apple.finder ShowPathbar -bool true

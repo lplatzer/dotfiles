@@ -18,6 +18,7 @@ install-tools.ps1
 Brewfile
 .config/linearmouse
 .aerospace.toml
+.local/bin/aerospace-desk
 {{ end }}
 
 # Linux-only configs — skip on macOS/Windows
