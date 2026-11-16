@@ -27,6 +27,24 @@ mise_global() {
   mise ls --global 2>/dev/null | grep -q "^${tool}[[:space:]]" || mise use --global "$spec"
 }
 
+# Claude Code, Codex CLI and pnpm from their vendors' own installers, never npm -g.
+# Claude Code and Codex land in ~/.local/bin and update themselves; pnpm goes to
+# $PNPM_HOME (the same value .zshrc sets). Codex's installer only edits a shell
+# profile when ~/.local/bin isn't on PATH, and PNPM_NO_MODIFY_PATH keeps pnpm's out
+# of it, so the chezmoi-managed ~/.zshrc stays untouched. Called from both branches.
+vendor_clis() {
+  export PATH="$HOME/.local/bin:$PATH"
+  export PNPM_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/pnpm"
+  export PATH="$PNPM_HOME/bin:$PATH"
+
+  command -v claude >/dev/null 2>&1 || curl -fsSL https://claude.ai/install.sh | bash \
+    || echo "Claude Code install failed — rerun: curl -fsSL https://claude.ai/install.sh | bash" >&2
+  command -v codex >/dev/null 2>&1 || curl -fsSL https://chatgpt.com/codex/install.sh | sh \
+    || echo "Codex CLI install failed — rerun: curl -fsSL https://chatgpt.com/codex/install.sh | sh" >&2
+  command -v pnpm >/dev/null 2>&1 || curl -fsSL https://get.pnpm.io/install.sh | PNPM_NO_MODIFY_PATH=1 sh - \
+    || echo "pnpm install failed — rerun: curl -fsSL https://get.pnpm.io/install.sh | PNPM_NO_MODIFY_PATH=1 sh -" >&2
+}
+
 # ── macOS ────────────────────────────────────────────────────────────────────
 # Homebrew + brew bundle live in run_onchange_before_install-brew.sh.tmpl (tracks Brewfile
 # changes independently so edits here don't trigger a full brew bundle re-run).
@@ -34,7 +52,7 @@ if [[ "$OS" == "Darwin" ]]; then
 
   # mise: activate and install runtimes (mise installed via Brewfile)
   eval "$(mise activate bash)"
-  mise_global node@lts
+  mise_global node@24
   mise_global python@latest
   mise_global zig@latest
 
@@ -44,17 +62,7 @@ if [[ "$OS" == "Darwin" ]]; then
   # ty — Astral Python type checker / LSP (alpha), used by Neovim's basedpyright+ty setup
   command -v ty >/dev/null 2>&1 || uv tool install ty
 
-  # bun
-  if ! command -v bun >/dev/null 2>&1; then
-    curl -fsSL https://bun.sh/install | bash
-  fi
-  export PATH="$HOME/.bun/bin:$PATH"
-
-  # Claude Code
-  command -v claude >/dev/null 2>&1 || bun install --global @anthropic-ai/claude-code
-
-  # Codex CLI (OpenAI)
-  command -v codex >/dev/null 2>&1 || npm install -g @openai/codex || echo "codex install failed — install manually" >&2
+  vendor_clis
 
 # ── Arch Linux / CachyOS ─────────────────────────────────────────────────────
 elif command -v pacman >/dev/null 2>&1; then
@@ -72,7 +80,7 @@ elif command -v pacman >/dev/null 2>&1; then
     luarocks imagemagick ghostscript \
     go rustup zig uv \
     python python-pip \
-    nodejs npm pnpm \
+    nodejs npm tree-sitter-cli \
     dotnet-sdk \
     uwsm \
     hyprland xdg-desktop-portal-hyprland wl-clipboard cliphist \
@@ -123,28 +131,11 @@ elif command -v pacman >/dev/null 2>&1; then
   # mise: install runtimes
   if command -v mise >/dev/null 2>&1; then
     eval "$(mise activate bash)" 2>/dev/null || true
-    mise_global node@lts
+    mise_global node@24
     mise_global python@latest
   fi
 
-  if command -v npm >/dev/null 2>&1; then
-    command -v tree-sitter >/dev/null 2>&1 || sudo npm install -g tree-sitter-cli
-  fi
-
-  # bun
-  if ! command -v bun >/dev/null 2>&1; then
-    curl -fsSL https://bun.sh/install | bash
-  fi
-  export PATH="$HOME/.bun/bin:$PATH"
-
-  # Claude Code
-  command -v claude >/dev/null 2>&1 || bun install --global @anthropic-ai/claude-code
-
-  # Codex CLI
-  # if possible, move to bun in the future
-  if command -v npm >/dev/null 2>&1; then
-    command -v codex >/dev/null 2>&1 || sudo npm install -g @openai/codex || echo "codex install failed — install manually" >&2
-  fi
+  vendor_clis
 
   if [[ "$IS_PERSONAL" == "true" ]]; then
     # 1password-cli: chaotic-aur on CachyOS, otherwise manual

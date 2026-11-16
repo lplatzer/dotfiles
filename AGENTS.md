@@ -124,8 +124,8 @@ The shell bootstrap sets `ErrorActionPreference = "Continue"` (PS) and omits `se
 ## What not to do
 
 - Do not hardcode home directory paths as `/home/username/` or `/Users/username/` — use `$HOME` or chezmoi's `~` expansion.
-- Do not introduce `npm`/`npx` — the user uses `bun`/`bunx` everywhere.
-- Do not add Python scripts — TypeScript is the scripting language of choice.
+- Do not install CLIs with `npm install -g` (and never `sudo npm`) — use the vendor's installer. Use `pnpm` for JS projects, Node 24 via mise.
+- Do not add Python scripts — TypeScript, run directly by Node 24 (a `.ts` file, no build step), is the scripting language of choice.
 - Do not add tools to only one OS branch without noting why it is intentionally omitted from the others.
 - Do not add secrets, API keys, or credentials to any file — use the `private_dot_ssh/config.tmpl` pattern and route through 1Password where possible.
 - Do not touch `Plans/` — it is excluded from deployment via `.chezmoiignore` and contains planning artifacts only.

@@ -14,6 +14,7 @@ Brewfile
 .config/linearmouse
 .aerospace.toml
 .local/bin/aerospace-desk
+.local/bin/aerospace-desk.ts
 {{ end }}
 
 # Linux-only configs — skip on macOS/Windows
