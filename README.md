@@ -68,6 +68,15 @@ The install script installs all tools via `pacman` + optional AUR (paru), then b
 
 ### Windows
 
+Run the wizard first: it checks the execution policy, winget, OpenSSH and the Claude WSL policy, then runs the apply for you.
+
+```powershell
+irm https://raw.githubusercontent.com/lplatzer/dotfiles/main/scripts/wizard-windows.ps1 -OutFile wizard-windows.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\wizard-windows.ps1
+```
+
+Or by hand:
+
 ```powershell
 winget install twpayne.chezmoi
 chezmoi init --apply lplatzer/dotfiles
@@ -76,6 +85,16 @@ chezmoi init --apply lplatzer/dotfiles
 The apply runs `winget configure` on `.chezmoitemplates/windows/configuration.winget` (one UAC prompt), installs superwhisper and Keymapp from their vendors, adds the 0xProto Nerd Font for the current user, and merges the Windows Terminal settings into the file Terminal keeps. zsh, mise and the Unix scripts stay off the Windows host: dev tooling lives in WSL.
 
 > macOS-only configs (AeroSpace, LinearMouse, Brewfile) are excluded via `.chezmoiignore` on non-macOS machines.
+
+### After the first apply: the wizard
+
+Sign-ins, licences, system extensions, privacy permissions and Rex can't be scripted. The wizard walks through them one stage at a time and skips what's already done:
+
+```bash
+~/.local/share/chezmoi/scripts/wizard-mac.sh       # macOS
+```
+
+On Windows, `scripts/wizard-windows.ps1` (see above) covers the PC.
 
 ---
 
