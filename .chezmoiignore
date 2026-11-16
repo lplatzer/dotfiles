@@ -8,11 +8,6 @@ AGENTS.md
 # every Claude Code session under $HOME, not just sessions in this repo.
 CLAUDE.md
 
-# PowerShell install script — Windows only
-{{ if ne .chezmoi.os "windows" -}}
-install-tools.ps1
-{{ end -}}
-
 # macOS-only configs — skip on Linux
 {{ if ne .chezmoi.os "darwin" }}
 Brewfile

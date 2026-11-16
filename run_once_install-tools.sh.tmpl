@@ -56,34 +56,6 @@ if [[ "$OS" == "Darwin" ]]; then
   # Codex CLI (OpenAI)
   command -v codex >/dev/null 2>&1 || npm install -g @openai/codex || echo "codex install failed — install manually" >&2
 
-  if [[ "$IS_PERSONAL" == "true" ]]; then
-    # OpenWhispr — no Homebrew cask; latest DMG from GitHub releases
-    if [[ ! -d "/Applications/OpenWhispr.app" ]]; then
-      OPENWHISPR_URL=$(curl -fsSL https://api.github.com/repos/OpenWhispr/openwhispr/releases/latest \
-        | grep "browser_download_url.*\.dmg" | cut -d'"' -f4 | head -1)
-      if [[ -n "$OPENWHISPR_URL" ]]; then
-        TMP=$(mktemp -d)
-        curl -fsSL "$OPENWHISPR_URL" -o "$TMP/OpenWhispr.dmg"
-        hdiutil attach "$TMP/OpenWhispr.dmg" -mountpoint "$TMP/mnt" -quiet
-        cp -R "$TMP/mnt/"*.app /Applications/
-        hdiutil detach "$TMP/mnt" -quiet
-        rm -rf "$TMP"
-        # Belt-and-suspenders: cp -R preserves xattrs, so if the mounted dmg carried
-        # com.apple.quarantine, the copied .app would too, triggering Gatekeeper's
-        # "downloaded from the internet" prompt on first launch.
-        xattr -dr com.apple.quarantine /Applications/OpenWhispr.app 2>/dev/null || true
-      fi
-    fi
-
-    # vllm (best-effort: upstream vllm releases can pin a torch version no
-    # longer on PyPI, which fails the build — don't let that abort the script)
-    command -v vllm >/dev/null 2>&1 || pip install vllm || echo "vllm install failed — install manually" >&2
-
-    # PAI — fill in your private repo URL and uncomment:
-    # PAI_REPO="git@github.com:YOUR_USERNAME/pai.git"
-    # [[ ! -d "$HOME/.claude" ]] && git clone "$PAI_REPO" "$HOME/.claude"
-  fi
-
 # ── Arch Linux / CachyOS ─────────────────────────────────────────────────────
 elif command -v pacman >/dev/null 2>&1; then
   export PATH="$HOME/.local/bin:$PATH"
@@ -93,8 +65,8 @@ elif command -v pacman >/dev/null 2>&1; then
 
   once pacman-syu -- sudo pacman -Syu --noconfirm
   sudo pacman -S --noconfirm --needed \
-    zsh ghostty git wget curl chezmoi mise \
-    zellij eza zoxide atuin starship vivid \
+    zsh kitty git wget curl chezmoi mise \
+    eza zoxide starship \
     fzf fd ripgrep \
     neovim lazygit \
     luarocks imagemagick ghostscript \
@@ -191,183 +163,6 @@ elif command -v pacman >/dev/null 2>&1; then
 
     # Ollama
     command -v ollama >/dev/null 2>&1 || curl -fsSL https://ollama.ai/install.sh | sh || echo "ollama install failed — install manually" >&2
-
-    # vllm
-    # Arch enforces PEP 668 according to claude code, so this would not run
-    # command -v vllm >/dev/null 2>&1 || pip install vllm
-
-    # PAI — fill in your private repo URL and uncomment:
-    # PAI_REPO="git@github.com:YOUR_USERNAME/pai.git"
-    # [[ ! -d "$HOME/.claude" ]] && git clone "$PAI_REPO" "$HOME/.claude"
-  fi
-
-# ── Debian / Ubuntu / WSL ────────────────────────────────────────────────────
-elif command -v apt-get >/dev/null 2>&1; then
-
-  export PATH="$HOME/.local/bin:$PATH"
-  mkdir -p "$HOME/.local/bin"
-
-  # Note: the Hyprland desktop (hyprland/walker/etc.) is intentionally NOT in this
-  # branch. CachyOS (pacman branch) is the graphical target; the apt branch covers
-  # Debian/Ubuntu/WSL, which are headless/server, and Debian's Hyprland lags badly.
-
-  once apt-update -- sudo apt-get update -qq
-  sudo apt-get install -y --no-install-recommends \
-    git wget curl build-essential gpg zsh \
-    fzf fd-find ripgrep \
-    neovim \
-    python3 python3-pip
-
-  # Wireshark — pre-answer the "allow non-root capture" prompt, then add user to group
-  if ! command -v wireshark >/dev/null 2>&1; then
-    echo "wireshark-common wireshark-common/install-setuid boolean true" \
-      | sudo debconf-set-selections
-    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y wireshark
-    sudo usermod -aG wireshark "$USER" 2>/dev/null || true
-  fi
-
-  # chezmoi (official installer — idempotent)
-  if ! command -v chezmoi >/dev/null 2>&1; then
-    sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"
-  fi
-
-  # fd ships as fd-find on Debian/Ubuntu; shim it
-  if ! command -v fd >/dev/null 2>&1 && command -v fdfind >/dev/null 2>&1; then
-    mkdir -p "$HOME/.local/bin"
-    ln -sf "$(which fdfind)" "$HOME/.local/bin/fd"
-  fi
-
-  # eza
-  if ! command -v eza >/dev/null 2>&1; then
-    wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc \
-      | sudo gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
-    echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" \
-      | sudo tee /etc/apt/sources.list.d/gierens.list
-    sudo chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list
-    sudo apt-get update -qq && sudo apt-get install -y eza
-  fi
-
-  # gh (GitHub CLI)
-  if ! command -v gh >/dev/null 2>&1; then
-    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
-      | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
-      | sudo tee /etc/apt/sources.list.d/github-cli.list
-    sudo apt-get update -qq && sudo apt-get install -y gh
-  fi
-
-  command -v starship >/dev/null 2>&1 || curl -fsSL https://starship.rs/install.sh | sh -s -- -y
-  command -v zoxide  >/dev/null 2>&1 || curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
-  command -v atuin   >/dev/null 2>&1 || curl -fsSL https://raw.githubusercontent.com/atuinsh/atuin/main/install.sh | bash
-
-  # zellij
-  if ! command -v zellij >/dev/null 2>&1; then
-    ZELLIJ_VER=$(curl -fsSL https://api.github.com/repos/zellij-org/zellij/releases/latest | grep tag_name | cut -d'"' -f4)
-    curl -fsSL "https://github.com/zellij-org/zellij/releases/download/${ZELLIJ_VER}/zellij-x86_64-unknown-linux-musl.tar.gz" \
-      | tar -xz -C "$HOME/.local/bin"
-  fi
-
-  # lazygit
-  if ! command -v lazygit >/dev/null 2>&1; then
-    LG_VER=$(curl -fsSL https://api.github.com/repos/jesseduffield/lazygit/releases/latest | grep tag_name | cut -d'"' -f4 | sed 's/v//')
-    curl -fsSL "https://github.com/jesseduffield/lazygit/releases/download/v${LG_VER}/lazygit_${LG_VER}_Linux_x86_64.tar.gz" \
-      | tar -xz -C "$HOME/.local/bin" lazygit
-  fi
-
-  # go
-  if ! command -v go >/dev/null 2>&1; then
-    GO_VER=$(curl -fsSL https://go.dev/dl/?mode=json | python3 -c "import sys,json;print(json.load(sys.stdin)[0]['version'])")
-    curl -fsSL "https://go.dev/dl/${GO_VER}.linux-amd64.tar.gz" | sudo tar -C /usr/local -xz
-    echo 'export PATH=$PATH:/usr/local/go/bin' >> "$HOME/.profile"
-  fi
-
-  # rustup
-  if ! command -v rustup >/dev/null 2>&1; then
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-    . "$HOME/.cargo/env"
-  fi
-
-  # mise
-  if ! command -v mise >/dev/null 2>&1; then
-    curl -fsSL https://mise.run | sh
-  fi
-  export PATH="$HOME/.local/bin:$PATH"
-  eval "$(mise activate bash)"
-  mise_global node@lts
-  mise_global python@latest
-  mise_global zig@latest
-  mise_global pnpm@latest
-  command -v tree-sitter >/dev/null 2>&1 || npm install -g tree-sitter-cli
-
-  # uv (Python package manager / project tool)
-  if ! command -v uv >/dev/null 2>&1; then
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-  fi
-
-  # ty — Astral Python type checker / LSP (alpha), used by Neovim's basedpyright+ty setup
-  command -v ty >/dev/null 2>&1 || uv tool install ty
-
-  # dotnet (LTS via install script)
-  if ! command -v dotnet >/dev/null 2>&1; then
-    curl -fsSL https://dot.net/v1/dotnet-install.sh \
-      | bash -s -- --channel LTS --install-dir "$HOME/.dotnet"
-    echo 'export DOTNET_ROOT="$HOME/.dotnet"' >> "$HOME/.profile"
-    echo 'export PATH="$PATH:$HOME/.dotnet"' >> "$HOME/.profile"
-    export DOTNET_ROOT="$HOME/.dotnet"
-    export PATH="$PATH:$HOME/.dotnet"
-  fi
-
-  # vivid
-  if ! command -v vivid >/dev/null 2>&1; then
-    VIVID_VER=$(curl -fsSL https://api.github.com/repos/sharkdp/vivid/releases/latest \
-      | grep tag_name | cut -d'"' -f4 | sed 's/v//')
-    curl -fsSL "https://github.com/sharkdp/vivid/releases/download/v${VIVID_VER}/vivid_${VIVID_VER}_amd64.deb" \
-      -o /tmp/vivid.deb
-    sudo dpkg -i /tmp/vivid.deb && rm /tmp/vivid.deb
-  fi
-
-  # Antidote
-  if [[ ! -d "$HOME/.antidote" ]]; then
-    git clone --depth=1 https://github.com/mattmc3/antidote.git "$HOME/.antidote"
-  fi
-
-  mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"
-  [[ "$SHELL" != "$(which zsh)" ]] && chsh -s "$(which zsh)" || true
-
-  # bun
-  if ! command -v bun >/dev/null 2>&1; then
-    curl -fsSL https://bun.sh/install | bash
-  fi
-  export PATH="$HOME/.bun/bin:$PATH"
-
-  # Claude Code
-  command -v claude >/dev/null 2>&1 || bun install --global @anthropic-ai/claude-code
-
-  # Codex CLI
-  command -v codex >/dev/null 2>&1 || npm install -g @openai/codex || echo "codex install failed — install manually" >&2
-
-  if [[ "$IS_PERSONAL" == "true" ]]; then
-    # 1Password CLI
-    if ! command -v op >/dev/null 2>&1; then
-      curl -fsSL https://downloads.1password.com/linux/keys/1password.asc \
-        | sudo gpg --dearmor -o /usr/share/keyrings/1password-archive-keyring.gpg
-      echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/$(dpkg --print-architecture) stable main" \
-        | sudo tee /etc/apt/sources.list.d/1password.list
-      sudo apt-get update -qq && sudo apt-get install -y 1password-cli
-    fi
-
-    # Ollama
-    command -v ollama >/dev/null 2>&1 || curl -fsSL https://ollama.ai/install.sh | sh || echo "ollama install failed — install manually" >&2
-
-    # GUI apps via snap (skipped on headless/WSL — no display server)
-    if command -v snap >/dev/null 2>&1 && [[ -n "${DISPLAY:-}" || -n "${WAYLAND_DISPLAY:-}" ]]; then
-      snap install signal-desktop telegram-desktop 2>/dev/null || true
-      snap install obsidian --classic 2>/dev/null || true
-    fi
-
-    # PAI — fill in your private repo URL and uncomment:
-    # PAI_REPO="git@github.com:YOUR_USERNAME/pai.git"
-    # [[ ! -d "$HOME/.claude" ]] && git clone "$PAI_REPO" "$HOME/.claude"
   fi
 
 else
