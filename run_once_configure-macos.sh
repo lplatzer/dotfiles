@@ -10,9 +10,18 @@ if [[ ! -f /etc/pam.d/sudo_local ]] && [[ -f /etc/pam.d/sudo_local.template ]]; 
     | sudo tee /etc/pam.d/sudo_local >/dev/null
 fi
 
-# Dock
+# Dock. Snapshot its prefs first: the Dock restarts at the end only if they changed.
+DOCK_BEFORE=$(defaults export com.apple.dock - 2>/dev/null | shasum)
+defaults write com.apple.dock autohide -bool true
 defaults write com.apple.dock autohide-delay -float 0
 defaults write com.apple.dock autohide-time-modifier -float 0
+# Mission Control groups windows by app (AeroSpace recommends it: its windows
+# otherwise show up tiny there).
+defaults write com.apple.dock expose-group-apps -bool true
+
+# Spaces: one Space across all displays ("Displays have separate Spaces" off), as
+# AeroSpace recommends. Takes effect after logging out and in again.
+defaults write com.apple.spaces spans-displays -bool true
 
 # Windows: Ctrl+Cmd + drag anywhere in a window moves it (like Hyprland's mod+drag).
 # AeroSpace re-tiles a tiled window where it is dropped.
@@ -44,12 +53,10 @@ defaults write NSGlobalDomain NSAutomaticTextCompletionEnabled -bool false
 # Stop Photos opening on device connect
 defaults -currentHost write com.apple.ImageCapture disableHotPlug -bool true
 
-# Apply dock changes. This script re-runs whenever its contents change (chezmoi
-# keys run_once_ on the script hash), and every `defaults write` above is
-# idempotent — but killall Dock is not: it blanks the Dock mid-session for no
-# reason on a repeat apply. Only restart the Dock the first time.
-ONCE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/chezmoi-once"
-mkdir -p "$ONCE_DIR"
-if [[ ! -e "$ONCE_DIR/dock-restart" ]]; then
-  killall Dock && touch "$ONCE_DIR/dock-restart"
+# Apply Dock changes. This script re-runs whenever its contents change (chezmoi
+# keys run_once_ on the script hash) and every `defaults write` above is
+# idempotent, but `killall Dock` blanks the Dock mid-session, so only restart it
+# when the Dock prefs actually changed.
+if [[ "$(defaults export com.apple.dock - 2>/dev/null | shasum)" != "$DOCK_BEFORE" ]]; then
+  killall Dock
 fi
