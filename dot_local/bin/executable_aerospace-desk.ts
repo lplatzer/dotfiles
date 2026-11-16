@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 // aerospace-desk: role-based workspaces for AeroSpace that adapt to the screens attached.
 //
 //   aerospace-desk arrange          sort known apps on workspaces 1-3 (Hyper+A; also at start and on screen changes)
@@ -24,6 +24,7 @@
 
 import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
+import { spawn, spawnSync } from "node:child_process";
 
 type Role = "web" | "code" | "ai" | "comms" | "vm";
 const ROLE_ORDER: Role[] = ["web", "code", "ai", "comms", "vm"];
@@ -49,8 +50,8 @@ const PIDFILE = `${tmpdir()}/aerospace-desk.pid`;
 const log = (msg: string) => appendFileSync(LOG, `${new Date().toISOString()} ${msg}\n`);
 
 function run(...cmd: string[]) {
-  const r = Bun.spawnSync({ cmd, stdout: "pipe", stderr: "pipe" });
-  return { ok: r.exitCode === 0, out: r.stdout.toString().trim(), err: r.stderr.toString().trim() };
+  const r = spawnSync(cmd[0], cmd.slice(1), { encoding: "utf8" });
+  return { ok: r.status === 0, out: (r.stdout ?? "").trim(), err: (r.stderr ?? r.error?.message ?? "").trim() };
 }
 const aero = (...args: string[]) => run("aerospace", ...args);
 const notify = (msg: string) =>
@@ -193,7 +194,7 @@ async function watch() {
   let p = plan(monitors());
   if (!process.argv.includes("--no-arrange")) arrange(p);
   let sig = signature(), arrangedSig = sig;
-  let pending: Timer | undefined;
+  let pending: ReturnType<typeof setTimeout> | undefined;
   setInterval(() => {
     const s = signature();
     if (s === sig || !s) return;
@@ -207,11 +208,12 @@ async function watch() {
       arrangedSig = now; p = plan(monitors()); arrange(p);
     }, 2000);
   }, 3000);
-  const sub = Bun.spawn(["aerospace", "subscribe", "--no-send-initial", "window-detected", "focus-changed"], { stdout: "pipe" });
+  const sub = spawn("aerospace", ["subscribe", "--no-send-initial", "window-detected", "focus-changed"], { stdio: ["ignore", "pipe", "ignore"] });
+  sub.stdout.setEncoding("utf8");
   const focus: string[] = []; // most recent last
   let buf = "";
   for await (const chunk of sub.stdout) {
-    buf += new TextDecoder().decode(chunk);
+    buf += chunk;
     let nl;
     while ((nl = buf.indexOf("\n")) >= 0) {
       const line = buf.slice(0, nl); buf = buf.slice(nl + 1);
@@ -244,7 +246,7 @@ switch (cmd) {
     arrange(undefined, args.includes("--all"));
     // After a config reload AeroSpace doesn't rerun after-startup-command, so make sure the watcher runs.
     if (!(existsSync(PIDFILE) && alive(Number(readFileSync(PIDFILE, "utf8")))))
-      Bun.spawn([process.execPath, import.meta.path, "watch", "--no-arrange"], { stdio: ["ignore", "ignore", "ignore"] }).unref();
+      spawn(process.execPath, [import.meta.filename, "watch", "--no-arrange"], { stdio: "ignore", detached: true }).unref();
     break;
   case "watch": await watch(); break;
   case "size": size(args[0], args[1]); break;

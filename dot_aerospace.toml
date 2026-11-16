@@ -53,11 +53,12 @@ on-mode-changed = []
     outer.top        = 8
     outer.bottom     = 8
 
-# exec-* commands get AeroSpace's minimal PATH; add bun and ~/.local/bin.
+# exec-* commands get AeroSpace's minimal PATH; add ~/.local/bin and mise's shims
+# (aerospace-desk runs on mise's Node 24).
 [exec]
     inherit-env-vars = true
 [exec.env-vars]
-    PATH = '${HOME}/.local/bin:${HOME}/.bun/bin:/opt/homebrew/bin:${PATH}'
+    PATH = '${HOME}/.local/bin:${HOME}/.local/share/mise/shims:/opt/homebrew/bin:${PATH}'
 
 # ── main mode ────────────────────────────────────────────────────────────────
 # WM mod = cmd-alt-ctrl (Hyper). Shifted variants add shift.
