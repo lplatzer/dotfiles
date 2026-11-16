@@ -1,0 +1,200 @@
+# GlazeWM (Windows): mirrors ~/.aerospace.toml. Hyper = Ctrl+Alt+Win here
+# (Ctrl+Alt+Cmd on the Mac), from the same ZSA thumb key; Shift variants move.
+# Not available in GlazeWM: accordion/stack (Hyper+T), balance sizes (Hyper+E).
+# Known traps to test on the PC: Hyper+Shift = Ctrl+Alt+Shift+Win is the Office
+# key chord (Office+L opens LinkedIn, so Hyper+Shift+L may too), and Ctrl+Alt is
+# AltGr on some layouts (WS-28).
+general:
+  startup_commands: []
+  shutdown_commands: []
+  config_reload_commands: []
+  focus_follows_cursor: false
+  toggle_workspace_on_refocus: false
+  cursor_jump:
+    enabled: true
+    trigger: 'monitor_focus'
+  hide_method: 'cloak'
+  show_all_in_taskbar: false
+
+gaps:
+  scale_with_dpi: true
+  inner_gap: '8px'
+  outer_gap: { top: '8px', right: '8px', bottom: '8px', left: '8px' }
+
+window_effects:
+  focused_window:
+    border: { enabled: true, color: '#89b4fa' }
+  other_windows:
+    border: { enabled: false, color: '#45475a' }
+
+window_behavior:
+  initial_state: 'tiling'
+  state_defaults:
+    floating: { centered: true, shown_on_top: false }
+    fullscreen: { maximized: false, shown_on_top: false }
+
+# Role workspaces as on the Mac: 1 web, 2 code and AI, 3 comms, 4 VMs.
+workspaces:
+  - name: '1'
+  - name: '2'
+  - name: '3'
+  - name: '4'
+  - name: '5'
+  - name: '6'
+  - name: '7'
+  - name: '8'
+  - name: '9'
+  - name: '10'
+
+window_rules:
+  # Route apps to their role workspace when they open (run_once: a window you
+  # move afterwards stays where you put it).
+  - commands: ['move --workspace 1']
+    match:
+      - window_process: { regex: '^(chrome|zen|Obsidian)$' }
+  - commands: ['move --workspace 2']
+    match:
+      - window_process: { regex: '^(Code|devenv|claude|ChatGPT|WindowsTerminal)$' }
+  - commands: ['move --workspace 3']
+    match:
+      - window_process: { regex: '^(ms-teams|olk|OUTLOOK|slack|WhatsApp)$' }
+  - commands: ['move --workspace 4']
+    match:
+      - window_process: { regex: '^(vmware|VirtualBox|mstsc)$' }
+
+  # Popups and utility windows float.
+  - commands: ['set-floating --centered']
+    match:
+      - window_process: { regex: '^(superwhisper|Taskmgr|SystemSettings)$' }
+
+  - commands: ['ignore']
+    match:
+      - window_title: { regex: '[Pp]icture.in.[Pp]icture' }
+        window_class: { regex: 'Chrome_WidgetWin_1|MozillaDialogClass' }
+      - window_process: { equals: 'PowerToys' }
+        window_class: { regex: 'HwndWrapper\[PowerToys\.PowerAccent.*?\]' }
+      - window_title: { equals: 'Command Palette' }
+        window_class: { equals: 'WinUIDesktopWin32WindowClass' }
+      - window_process: { equals: 'PowerToys' }
+        window_title: { regex: '.*? - Peek' }
+      - window_process: { equals: 'EXCEL' }
+        window_class: { not_regex: 'XLMAIN' }
+      - window_process: { equals: 'WINWORD' }
+        window_class: { not_regex: 'OpusApp' }
+      - window_process: { equals: 'POWERPNT' }
+        window_class: { not_regex: 'PPTFrameClass' }
+
+keybindings:
+  # Terminal (Windows Terminal until Rex has a Windows build)
+  - commands: ['shell-exec wt']
+    bindings: ['ctrl+alt+win+enter']
+
+  # Window operations
+  - commands: ['close']
+    bindings: ['ctrl+alt+win+q']
+  - commands: ['toggle-fullscreen']
+    bindings: ['ctrl+alt+win+f']
+  - commands: ['toggle-floating --centered']
+    bindings: ['ctrl+alt+win+shift+space']
+  - commands: ['toggle-tiling-direction']
+    bindings: ['ctrl+alt+win+oem_question']
+
+  # Focus (vim h/j/k/l)
+  - commands: ['focus --direction left']
+    bindings: ['ctrl+alt+win+h']
+  - commands: ['focus --direction down']
+    bindings: ['ctrl+alt+win+j']
+  - commands: ['focus --direction up']
+    bindings: ['ctrl+alt+win+k']
+  - commands: ['focus --direction right']
+    bindings: ['ctrl+alt+win+l']
+
+  # Move window
+  - commands: ['move --direction left']
+    bindings: ['ctrl+alt+win+shift+h']
+  - commands: ['move --direction down']
+    bindings: ['ctrl+alt+win+shift+j']
+  - commands: ['move --direction up']
+    bindings: ['ctrl+alt+win+shift+k']
+  - commands: ['move --direction right']
+    bindings: ['ctrl+alt+win+shift+l']
+
+  # Resize in steps; Shift resizes the other axis
+  - commands: ['resize --width -100px']
+    bindings: ['ctrl+alt+win+oem_minus']
+  - commands: ['resize --width +100px']
+    bindings: ['ctrl+alt+win+oem_plus']
+  - commands: ['resize --height -100px']
+    bindings: ['ctrl+alt+win+shift+oem_minus']
+  - commands: ['resize --height +100px']
+    bindings: ['ctrl+alt+win+shift+oem_plus']
+
+  # Size presets, bottom-left row: z 1/4, x 1/3, c 1/2, v 2/3, b 3/4 of the width
+  - commands: ['size --width 25%']
+    bindings: ['ctrl+alt+win+z']
+  - commands: ['size --width 33%']
+    bindings: ['ctrl+alt+win+x']
+  - commands: ['size --width 50%']
+    bindings: ['ctrl+alt+win+c']
+  - commands: ['size --width 67%']
+    bindings: ['ctrl+alt+win+v']
+  - commands: ['size --width 75%']
+    bindings: ['ctrl+alt+win+b']
+
+  # Monitors: m focuses the monitor to the right, Shift+m sends the window there
+  - commands: ['focus --workspace-in-direction right']
+    bindings: ['ctrl+alt+win+m']
+  - commands: ['move --workspace-in-direction right', 'focus --workspace-in-direction right']
+    bindings: ['ctrl+alt+win+shift+m']
+
+  # Workspaces
+  - commands: ['focus --recent-workspace']
+    bindings: ['ctrl+alt+win+tab']
+  - commands: ['move-workspace --direction right']
+    bindings: ['ctrl+alt+win+shift+tab']
+  - commands: ['focus --workspace 1']
+    bindings: ['ctrl+alt+win+1']
+  - commands: ['focus --workspace 2']
+    bindings: ['ctrl+alt+win+2']
+  - commands: ['focus --workspace 3']
+    bindings: ['ctrl+alt+win+3']
+  - commands: ['focus --workspace 4']
+    bindings: ['ctrl+alt+win+4']
+  - commands: ['focus --workspace 5']
+    bindings: ['ctrl+alt+win+5']
+  - commands: ['focus --workspace 6']
+    bindings: ['ctrl+alt+win+6']
+  - commands: ['focus --workspace 7']
+    bindings: ['ctrl+alt+win+7']
+  - commands: ['focus --workspace 8']
+    bindings: ['ctrl+alt+win+8']
+  - commands: ['focus --workspace 9']
+    bindings: ['ctrl+alt+win+9']
+  - commands: ['focus --workspace 10']
+    bindings: ['ctrl+alt+win+0']
+  - commands: ['move --workspace 1']
+    bindings: ['ctrl+alt+win+shift+1']
+  - commands: ['move --workspace 2']
+    bindings: ['ctrl+alt+win+shift+2']
+  - commands: ['move --workspace 3']
+    bindings: ['ctrl+alt+win+shift+3']
+  - commands: ['move --workspace 4']
+    bindings: ['ctrl+alt+win+shift+4']
+  - commands: ['move --workspace 5']
+    bindings: ['ctrl+alt+win+shift+5']
+  - commands: ['move --workspace 6']
+    bindings: ['ctrl+alt+win+shift+6']
+  - commands: ['move --workspace 7']
+    bindings: ['ctrl+alt+win+shift+7']
+  - commands: ['move --workspace 8']
+    bindings: ['ctrl+alt+win+shift+8']
+  - commands: ['move --workspace 9']
+    bindings: ['ctrl+alt+win+shift+9']
+  - commands: ['move --workspace 10']
+    bindings: ['ctrl+alt+win+shift+0']
+
+  # Service: reload config; pause all bindings (escape hatch if a chord misfires)
+  - commands: ['wm-reload-config']
+    bindings: ['ctrl+alt+win+shift+oem_semicolon']
+  - commands: ['wm-toggle-pause']
+    bindings: ['ctrl+alt+win+shift+p']

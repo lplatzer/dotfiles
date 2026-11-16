@@ -47,5 +47,6 @@ configure-macos.sh
 {{ else }}
 # Windows-only
 AppData
+.glzr
 install-windows-apps.ps1
 {{ end }}
