@@ -60,8 +60,18 @@ command -v atuin >/dev/null 2>&1 && eval "$(atuin init zsh)"
 # LS_COLORS via vivid
 command -v vivid >/dev/null 2>&1 && export LS_COLORS="$(vivid generate catppuccin-mocha)"
 
-# PAI alias — no-op if not installed
-[[ -f "$HOME/.claude/PAI/Tools/pai.ts" ]] && alias pai='bun "$HOME/.claude/PAI/Tools/pai.ts"'
+{{ if .is_personal -}}
+# Claude Code profiles: plain `claude` uses ~/.claude; other setups get their own
+# CLAUDE_CONFIG_DIR so settings, hooks, skills, plugins and MCP never mix.
+# Each profile needs one `/login` (the keychain entry is per config dir).
+# ccp <name> [args]: launch the profile in ~/.config/claude-profiles/<name>
+ccp() {
+  local dir="$HOME/.config/claude-profiles/${1:?usage: ccp <profile> [args]}"
+  [[ -d "$dir" ]] || { echo "ccp: no profile at $dir" >&2; return 1; }
+  CLAUDE_CONFIG_DIR="$dir" command claude "${@:2}"
+}
+
+{{ end -}}
 
 # nvim: from-scratch learning config via NVIM_APPNAME (separate config from LazyVim)
 alias vik='NVIM_APPNAME=nvim-lpl nvim'
