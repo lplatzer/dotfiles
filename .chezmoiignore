@@ -7,8 +7,9 @@ AGENTS.md
 # Repo-scoped agent rules: deploying them to ~/CLAUDE.md would load them into
 # every Claude Code session under $HOME, not just sessions in this repo.
 CLAUDE.md
-# Bootstrap one-liner, run from the repo; not a dotfile
+# Bootstrap one-liner and the fresh-machine wizards, run from the repo; not dotfiles
 install.sh
+scripts
 
 # macOS-only configs — skip on Linux
 {{ if ne .chezmoi.os "darwin" }}
