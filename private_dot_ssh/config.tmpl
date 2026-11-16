@@ -4,3 +4,10 @@ Host *
 {{ else if and .is_personal (eq .chezmoi.os "linux") }}
 	IdentityAgent "~/.1password/agent.sock"
 {{ end }}
+{{ if .is_personal }}
+# Azure DevOps: only offer the 1Password key "Azure DevOps SSH key" (RSA; Azure DevOps rejects ed25519).
+# The .pub file only selects which agent key to use; the private key stays in 1Password.
+Host ssh.dev.azure.com vs-ssh.visualstudio.com
+	IdentityFile ~/.ssh/azure-devops.pub
+	IdentitiesOnly yes
+{{ end }}
