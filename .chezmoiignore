@@ -7,6 +7,8 @@ AGENTS.md
 # Repo-scoped agent rules: deploying them to ~/CLAUDE.md would load them into
 # every Claude Code session under $HOME, not just sessions in this repo.
 CLAUDE.md
+# Bootstrap one-liner, run from the repo; not a dotfile
+install.sh
 
 # macOS-only configs — skip on Linux
 {{ if ne .chezmoi.os "darwin" }}
@@ -26,4 +28,24 @@ install-rex.sh
 .config/walker
 .config/waybar
 .config/mako
+{{ end }}
+
+# Windows host: no zsh, no Unix scripts (no interpreter for .sh), no nvim or mise on
+# the host (dev tooling lives in WSL)
+{{ if eq .chezmoi.os "windows" }}
+.zshrc
+.zprofile
+.zsh_plugins.txt
+.local
+.config/mise
+.config/nvim
+install-antidote.sh
+install-brew.sh
+install-tools.sh
+install-vendor-apps.sh
+configure-macos.sh
+{{ else }}
+# Windows-only
+AppData
+install-windows-apps.ps1
 {{ end }}
