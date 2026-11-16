@@ -17,7 +17,7 @@
 {{ end }}
 
 [core]
-	editor       = nvim
+	editor       = {{ if eq .chezmoi.os "windows" }}code --wait{{ else }}nvim{{ end }}
 	autocrlf     = input
 	excludesFile = ~/.gitignore_global
 
