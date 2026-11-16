@@ -1,0 +1,18 @@
+{{- /*
+  Claude Code user settings on work machines (WS-34). A modify_ template: these
+  keys are merged into the file Claude Code maintains, so settings changed in the
+  app survive. Deliberately small: no plugins, skills, hooks or MCP servers.
+*/ -}}
+{{- $s := dict -}}
+{{- if trim .chezmoi.stdin -}}
+{{-   $s = fromJson .chezmoi.stdin -}}
+{{- end -}}
+{{- $s = set $s "$schema" "https://json.schemastore.org/claude-code-settings.json" -}}
+{{- /* Never read secrets; ask before anything that leaves the machine. */ -}}
+{{- $deny := list "Read(./.env)" "Read(./.env.*)" "Read(./**/.env)" "Read(./**/.env.*)" "Read(~/.ssh/**)" "Read(~/.aws/**)" "Read(~/.azure/**)" -}}
+{{- $ask := list "Bash(git push:*)" "Bash(gh pr create:*)" "Bash(gh pr merge:*)" "Bash(npm publish:*)" "Bash(pnpm publish:*)" -}}
+{{- $perms := get $s "permissions" | default dict -}}
+{{- $perms = set $perms "deny" ((concat (get $perms "deny" | default list) $deny) | uniq) -}}
+{{- $perms = set $perms "ask" ((concat (get $perms "ask" | default list) $ask) | uniq) -}}
+{{- $s = set $s "permissions" $perms -}}
+{{ toPrettyJson $s }}

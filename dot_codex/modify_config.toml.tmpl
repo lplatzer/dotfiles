@@ -1,0 +1,15 @@
+{{- /*
+  Codex CLI and the ChatGPT app's Codex on work machines (WS-34). A modify_
+  template: these keys are merged into the file Codex maintains (trusted
+  projects and anything set in the app survive; comments don't).
+  Ask before leaving the sandbox; writes stay in the workspace; no network
+  from sandboxed commands.
+*/ -}}
+{{- $c := dict -}}
+{{- if trim .chezmoi.stdin -}}
+{{-   $c = fromToml .chezmoi.stdin -}}
+{{- end -}}
+{{- $c = set $c "approval_policy" "on-request" -}}
+{{- $c = set $c "sandbox_mode" "workspace-write" -}}
+{{- $c = setValueAtPath "sandbox_workspace_write.network_access" false $c -}}
+{{ toToml $c }}

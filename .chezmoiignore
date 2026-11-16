@@ -11,6 +11,13 @@ CLAUDE.md
 install.sh
 scripts
 
+# Agent config (WS-34) is for work machines only: personal machines keep their own
+# ~/.claude and ~/.codex untouched.
+{{ if .is_personal }}
+.claude
+.codex
+{{ end }}
+
 # macOS-only configs — skip on Linux
 {{ if ne .chezmoi.os "darwin" }}
 Brewfile
