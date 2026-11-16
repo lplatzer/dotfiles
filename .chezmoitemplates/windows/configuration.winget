@@ -4,7 +4,7 @@
 # `winget configure`. winget installers come from each vendor's own release location
 # (winget-pkgs submission rules). Not here: superwhisper and Keymapp (no winget
 # package; the script installs them from the vendor), Visual Studio (IT installs it),
-# Greenshot (company tool), Ollama (not on the work PC), GlazeWM (WS-33).
+# Greenshot (company tool), Ollama (not on the work PC).
 properties:
   configurationVersion: 0.2.0
   resources:
@@ -79,6 +79,15 @@ properties:
         securityContext: elevated
       settings:
         id: Microsoft.PowerToys
+        source: winget
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: glazewm
+      directives:
+        description: GlazeWM tiling window manager (config: ~/.glzr/glazewm)
+        allowPrerelease: true
+        securityContext: elevated
+      settings:
+        id: glzr-io.glazewm
         source: winget
 
     # Input devices
