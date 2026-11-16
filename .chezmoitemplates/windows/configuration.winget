@@ -83,7 +83,7 @@ properties:
     - resource: Microsoft.WinGet.DSC/WinGetPackage
       id: glazewm
       directives:
-        description: GlazeWM tiling window manager (config: ~/.glzr/glazewm)
+        description: GlazeWM tiling window manager, config in ~/.glzr/glazewm
         allowPrerelease: true
         securityContext: elevated
       settings:
