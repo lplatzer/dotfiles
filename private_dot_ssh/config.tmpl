@@ -10,4 +10,9 @@ Host *
 Host ssh.dev.azure.com vs-ssh.visualstudio.com
 	IdentityFile ~/.ssh/azure-devops.pub
 	IdentitiesOnly yes
+
+# Tailnet host: the short name resolves through Tailscale MagicDNS, so no IP or
+# tailnet domain is needed here.
+Host agent-container
+	User root
 {{ end }}
