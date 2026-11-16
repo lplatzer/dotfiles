@@ -15,6 +15,7 @@ Brewfile
 .aerospace.toml
 .local/bin/aerospace-desk
 .local/bin/aerospace-desk.ts
+Library
 {{ end }}
 
 # Linux-only configs — skip on macOS/Windows
