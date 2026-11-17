@@ -1,5 +1,6 @@
 # Planning artifacts — not deployed to home directory
 Plans/
+docs/
 
 # PowerShell install script — Windows only
 {{ if ne .chezmoi.os "windows" -}}
