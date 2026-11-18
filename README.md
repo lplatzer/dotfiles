@@ -68,7 +68,12 @@ The install script installs all tools via `pacman` + optional AUR (paru), then b
 
 ### Windows
 
-The Windows host setup (winget configure, chezmoi on Windows) is being rebuilt. Dev tooling runs inside WSL.
+```powershell
+winget install twpayne.chezmoi
+chezmoi init --apply lplatzer/dotfiles
+```
+
+The apply runs `winget configure` on `.chezmoitemplates/windows/configuration.winget` (one UAC prompt), installs superwhisper and Keymapp from their vendors, adds the 0xProto Nerd Font for the current user, and merges the Windows Terminal settings into the file Terminal keeps. zsh, mise and the Unix scripts stay off the Windows host: dev tooling lives in WSL.
 
 > macOS-only configs (AeroSpace, LinearMouse, Brewfile) are excluded via `.chezmoiignore` on non-macOS machines.
 

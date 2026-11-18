@@ -1,8 +1,16 @@
 {{- $computerTypeChoice := list "personal" "work" -}}
-{{- $hostType := promptChoice "What type of machine is this" $computerTypeChoice -}}
+{{- $hostType := promptChoiceOnce . "machine_type" "What type of machine is this" $computerTypeChoice -}}
 [data]
     name         = {{ promptStringOnce . "name" "Full name" | quote }}
     email        = {{ promptStringOnce . "email" "Personal email (default git identity)" | quote }}
     work_email   = {{ promptStringOnce . "work_email" "Work email (Azure DevOps / git)" | quote }}
     machine_type = {{ $hostType | quote }}
     is_personal  = {{ eq $hostType "personal" }}
+{{- if eq .chezmoi.os "windows" }}
+
+# run_*.ps1 scripts: Windows PowerShell 5.1 is always there (pwsh may not be), and a
+# process-scope Bypass gets past a Restricted default policy (not past a GPO).
+[interpreters.ps1]
+    command = "powershell"
+    args    = ["-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File"]
+{{- end }}
