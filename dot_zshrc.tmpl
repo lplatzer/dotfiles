@@ -47,18 +47,12 @@ antidote load
 # Shell integrations
 command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
 command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
-# fzf: completion + Ctrl-T (files) and Alt-C (cd). Before atuin so atuin keeps Ctrl-R.
-command -v fzf >/dev/null 2>&1 && source <(fzf --zsh)
-{{- if ne .chezmoi.os "darwin" }}
-# atuin lands in ~/.atuin/bin via its install script on Linux, so its env shim is
-# needed there to put it on PATH. On macOS atuin comes from brew — sourcing the
-# shim would prepend ~/.atuin/bin and shadow the brew binary with a stale copy.
-[[ -f "$HOME/.atuin/bin/env" ]] && . "$HOME/.atuin/bin/env"
-{{- end }}
-command -v atuin >/dev/null 2>&1 && eval "$(atuin init zsh)"
-
-# LS_COLORS via vivid
-command -v vivid >/dev/null 2>&1 && export LS_COLORS="$(vivid generate catppuccin-mocha)"
+# fzf: completion, Ctrl-T (files), Ctrl-R (history) and Alt-C (cd). zsh-vi-mode
+# resets keymaps on init, so the bindings are applied again through its hook.
+if command -v fzf >/dev/null 2>&1; then
+  source <(fzf --zsh)
+  zvm_after_init_commands+=('source <(fzf --zsh)')
+fi
 
 {{ if .is_personal -}}
 # Claude Code profiles: plain `claude` uses ~/.claude; other setups get their own
@@ -76,34 +70,3 @@ ccp() {
 # nvim: from-scratch learning config via NVIM_APPNAME (separate config from LazyVim)
 alias vik='NVIM_APPNAME=nvim-lpl nvim'
 
-# sessionizer: Ctrl-f -> fzf-pick a project and switch to its zellij session
-_sessionizer() { BUFFER="sessionizer"; zle accept-line; }
-zle -N _sessionizer
-bindkey '^f' _sessionizer
-# zsh-vi-mode resets keymaps on init; re-apply through its hook so the bind sticks.
-zvm_after_init_commands+=('bindkey "^f" _sessionizer')
-
-# zellij: NO auto-start (removed 2026-07). A bare shell stays a bare shell, so
-# there's no always-on zellij server repainting Ghostty and burning energy.
-# Enter zellij deliberately via the sessionizer (Ctrl-f) — that's the single
-# front door to a named project session.
-
-# research: a notes/research workspace (nvim + Claude side-by-side over the
-# ~/secondBrain vault, plus a shell) in its own "research" session. Mirrors the
-# sessionizer's attach-or-create logic, inside or outside zellij.
-research() {
-  local dir="$HOME/secondBrain" name=research
-  if [[ -n "${ZELLIJ:-}" ]]; then
-    if zellij list-sessions -ns 2>/dev/null | grep -qx "$name"; then
-      zellij action switch-session "$name"
-    else
-      zellij action switch-session --cwd "$dir" --layout "$name" "$name"
-    fi
-  elif zellij list-sessions -ns 2>/dev/null | grep -qx "$name"; then
-    zellij attach "$name"
-  else
-    # -n/--new-session-with-layout, not --layout: with --session the latter is
-    # read as "add tabs to existing session" and fails cold-start.
-    (cd "$dir" && zellij --session "$name" --new-session-with-layout "$name")
-  fi
-}

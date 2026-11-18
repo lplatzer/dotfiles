@@ -57,18 +57,16 @@ Always use `{{ ... }}` (no whitespace trimming) unless you understand when `{{- 
 
 ## OS coverage
 
-The install script (`run_once_install-tools.sh.tmpl`) handles three branches. When adding a tool, add it to all three unless it is genuinely OS-specific:
+The install script (`run_once_install-tools.sh.tmpl`) handles two branches. When adding a tool, add it to both unless it is genuinely OS-specific:
 
 - `Darwin` — Homebrew + `brew bundle` (Brewfile.tmpl), then manual installers for things not in Homebrew
 - `pacman` (Arch/CachyOS) — `pacman -S` for packaged tools, AUR via `paru` for the rest
-- `apt-get` (Debian/Ubuntu/WSL) — apt + third-party repos + manual binary downloads
 
 The `.chezmoiignore` file uses a template block to skip macOS-only source files on non-Darwin machines:
 
 ```
 {{ if ne .chezmoi.os "darwin" }}
 Brewfile
-.hammerspoon
 .aerospace.toml
 {{ end }}
 ```
@@ -117,7 +115,6 @@ Keep the non-personal section lean — it installs on all macOS machines includi
 Scripts named `run_once_*` execute on `chezmoi apply` when their content changes (chezmoi hashes the file). They are idempotent by design — every install step guards with `command -v` or existence checks before running. Do not break idempotency.
 
 - `run_once_install-tools.sh.tmpl` — cross-platform tool bootstrap
-- `run_once_install-tools.ps1` — Windows-only tool bootstrap
 - `run_once_configure-macos.sh` — macOS `defaults write` settings (exits immediately on non-Darwin)
 
 The shell bootstrap sets `ErrorActionPreference = "Continue"` (PS) and omits `set -e` (bash) intentionally — optional installs failing should warn, not abort the entire setup session.
@@ -151,7 +148,7 @@ chezmoi cat ~/.zshrc
 chezmoi data
 ```
 
-For the install scripts, test each OS branch in an appropriate VM or container before committing. The Debian branch in particular has several third-party APT repo setups that can break when upstream key URLs change.
+For the install scripts, test each OS branch in an appropriate VM or container before committing.
 
 ---
 

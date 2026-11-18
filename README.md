@@ -1,6 +1,6 @@
 # dotfiles
 
-Personal dotfiles managed by [chezmoi](https://chezmoi.io). Covers macOS (primary), Arch/CachyOS Linux, Debian/Ubuntu/WSL, and Windows (partial).
+Personal dotfiles managed by [chezmoi](https://chezmoi.io). Covers macOS (primary), Arch/CachyOS Linux, and Windows (in progress).
 
 ---
 
@@ -10,18 +10,15 @@ Personal dotfiles managed by [chezmoi](https://chezmoi.io). Covers macOS (primar
 |---|---|
 | **Shell** | zsh + [antidote](https://getantidote.github.io) + plugins |
 | **Prompt** | [starship](https://starship.rs) (Catppuccin Mocha) |
-| **Terminal multiplexer** | [zellij](https://zellij.dev) |
 | **Editor** | [Neovim](https://neovim.io) via [LazyVim](https://lazyvim.org) |
 | **File listing** | [eza](https://eza.community) |
 | **Directory jumping** | [zoxide](https://github.com/ajeetdsouza/zoxide) |
-| **Shell history** | [atuin](https://atuin.sh) |
-| **Fuzzy finder** | [fzf](https://github.com/junegunn/fzf) |
+| **Fuzzy finder, shell history** | [fzf](https://github.com/junegunn/fzf) (Ctrl+R) |
 | **Version manager** | [mise](https://mise.jdx.dev) (Node LTS, pnpm) |
 | **JS runtime** | [bun](https://bun.sh) |
 | **Git UI** | [lazygit](https://github.com/jesseduffield/lazygit) |
-| **LS_COLORS** | [vivid](https://github.com/sharkdp/vivid) (Catppuccin Mocha) |
 | **AI CLIs** | [Claude Code](https://claude.ai/code), [Codex](https://github.com/openai/codex) |
-| **macOS only** | AeroSpace, Hammerspoon, LinearMouse, Alfred, and more |
+| **macOS only** | AeroSpace, LinearMouse, Alfred, and more |
 | **Dev runtimes** | Go, Rust (rustup), .NET, Node (via mise) |
 
 ---
@@ -69,39 +66,11 @@ chezmoi init --apply git@github.com:lplatzer/dotfiles-chezmoi.git
 
 The install script installs all tools via `pacman` + optional AUR (paru), then bootstraps mise, bun, Claude Code, and Codex. Personal machines also get Ollama, Telegram, Signal, WhatsApp, and Obsidian.
 
-### Debian / Ubuntu / WSL
-
-```bash
-# 1. Install chezmoi
-sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin
-
-# 2. Apply dotfiles
-~/.local/bin/chezmoi init --apply https://github.com/lplatzer/dotfiles.git
-```
-
-The install script installs tools via apt, adds third-party repos for eza and gh, then bootstraps zellij, lazygit, Go, Rust, mise, bun, and Claude Code via their official installers.
-
 ### Windows
 
-Windows support is partial — shell tooling only (no zsh/zellij). Run the PowerShell bootstrap script manually:
+The Windows host setup (winget configure, chezmoi on Windows) is being rebuilt. Dev tooling runs inside WSL.
 
-```powershell
-# Run from an elevated PowerShell terminal
-Set-ExecutionPolicy Bypass -Scope Process -Force
-
-# Install chezmoi via winget
-winget install twpayne.chezmoi --silent --accept-source-agreements
-
-# Apply dotfiles
-chezmoi init --apply git@github.com:lplatzer/dotfiles-chezmoi.git
-
-# Run Windows tool bootstrap separately
-powershell -File run_once_install-tools.ps1
-```
-
-The PowerShell script installs: zellij, eza, zoxide, atuin, starship, ripgrep, fd, fzf, Neovim, lazygit, Git, Node LTS, Go, Rust, and .NET SDK via winget.
-
-> macOS-only configs (AeroSpace, Hammerspoon, LinearMouse, Brewfile) are excluded via `.chezmoiignore` on non-macOS machines.
+> macOS-only configs (AeroSpace, LinearMouse, Brewfile) are excluded via `.chezmoiignore` on non-macOS machines.
 
 ---
 
@@ -109,7 +78,7 @@ The PowerShell script installs: zellij, eza, zoxide, atuin, starship, ripgrep, f
 
 Set `is_personal = true` during the chezmoi prompt to unlock:
 
-- **macOS**: 1Password, Little Snitch, Proton Mail/VPN/Drive, JetBrains Toolbox, Figma, Affinity suite, Notion, Shapr3D, WhatsApp, Telegram, Signal, Qobuz, OpenWhispr
+- **macOS**: 1Password, Little Snitch, JetBrains Toolbox, Figma, Affinity suite, Notion, Shapr3D, WhatsApp, Telegram, Signal, Qobuz
 - **Linux**: 1Password CLI, Ollama, Telegram, Signal, WhatsApp, Obsidian
 - **Git**: SSH commit signing via 1Password agent
 
@@ -159,19 +128,13 @@ dotfiles/
 ├── dot_gitconfig-azure.tmpl    # identity for dev.azure.com remotes
 ├── dot_gitignore_global        # global .gitignore
 ├── dot_aerospace.toml          # AeroSpace tiling WM (macOS only)
-├── dot_hammerspoon/            # Hammerspoon config (macOS only)
 ├── dot_config/
-│   ├── atuin/                  # shell history config
-│   ├── ghostty/                # terminal emulator config
 │   ├── linearmouse/            # mouse configuration (macOS only)
-│   ├── nvim/                   # Neovim / LazyVim config
-│   ├── starship.toml           # prompt theme
-│   ├── zed/                    # Zed editor settings
-│   └── zellij/                 # terminal multiplexer config
+│   └── starship.toml           # prompt theme
+├── .chezmoiexternal.toml       # ~/.config/nvim from github.com/lplatzer/nvim
 ├── private_dot_ssh/
 │   └── config.tmpl             # SSH config (1Password agent on personal machines)
-├── run_once_install-tools.sh.tmpl   # cross-platform tool bootstrap (macOS/Arch/Debian)
-├── run_once_install-tools.ps1       # Windows tool bootstrap
+├── run_once_install-tools.sh.tmpl   # cross-platform tool bootstrap (macOS/Arch)
 └── run_once_configure-macos.sh     # macOS system defaults
 ```
 

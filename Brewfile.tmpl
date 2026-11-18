@@ -1,12 +1,9 @@
 # ── Dotfiles & shell ─────────────────────────────────────────────────────────
 brew "chezmoi"
 brew "antidote"
-brew "zellij"
 brew "eza"
 brew "zoxide"
-brew "atuin"
 brew "starship"
-brew "vivid"
 
 # ── Core CLI ─────────────────────────────────────────────────────────────────
 brew "git"
@@ -46,16 +43,14 @@ brew "uv"
 brew "dotnet"
 
 # ── macOS apps — all machines ────────────────────────────────────────────────
-cask "ghostty"
 cask "alfred"
 cask "swish"
 cask "dockdoor"
 cask "linearmouse"
 cask "nikitabobko/tap/aerospace"
 cask "istat-menus"
-cask "docker-desktop"
 cask "wireshark-app"
-# Bartender, CleanShot X, AlDente, ForkLift, Vivaldi, Ollama, Claude, superwhisper,
+# Bartender, CleanShot X, AlDente, Ollama, Claude, superwhisper,
 # Obsidian: moved to direct vendor-fetch install, see run_once_install-vendor-apps.sh.tmpl
 
 # ── Fonts ────────────────────────────────────────────────────────────────────
@@ -72,7 +67,6 @@ cask "1password-cli"
 # it ships as an installer app requiring interactive system-extension approval +
 # reboot, so cp -R into /Applications would produce a non-working install.
 cask "little-snitch"
-# Proton Mail, Proton VPN, Proton Drive: discontinued entirely, not installed anymore
 
 # Creative & productivity
 # JetBrains Toolbox, Figma, Notion: moved to direct vendor-fetch install,
@@ -90,5 +84,4 @@ mas "Telegram", id: 747648890
 
 # Media
 # Qobuz: moved to direct vendor-fetch install, see run_once_install-vendor-apps.sh.tmpl
-# OpenWhispr: no Homebrew cask — installed directly via run_once script
 {{ end }}

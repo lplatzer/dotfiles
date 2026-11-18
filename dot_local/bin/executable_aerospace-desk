@@ -33,10 +33,10 @@ const SORTED = new Set(["1", "2", "3"]); // arrange takes windows off these only
 const APPS: [RegExp, Role][] = [
   [/^(app\.zen-browser\.zen|com\.google\.Chrome|com\.apple\.Safari|org\.mozilla\.firefox|company\.thebrowser\.Browser|md\.obsidian)$/, "web"],
   [/^(com\.anthropic\.claudefordesktop|com\.openai\.codex|com\.openai\.chat)$/, "ai"],
-  [/^(com\.superlogical\.rex|com\.todesktop\.230313mzl4w4u92|com\.microsoft\.VSCode|dev\.zed\.Zed|com\.apple\.dt\.Xcode)$/, "code"],
+  [/^(com\.superlogical\.rex|com\.todesktop\.230313mzl4w4u92|com\.microsoft\.VSCode|com\.apple\.dt\.Xcode)$/, "code"],
   [/^com\.jetbrains\.(?!toolbox$)/, "code"],
   [/^(com\.vmware\.fusion|com\.parallels\.desktop\.console|com\.utmapp\.UTM|org\.virtualbox\.app\.VirtualBox)$/, "vm"],
-  [/^(net\.whatsapp\.WhatsApp|us\.zoom\.xos|com\.microsoft\.teams2|com\.tinyspeck\.slackmacgap|com\.hnc\.Discord|org\.whispersystems\.signal-desktop|com\.tdesktop\.Telegram|ru\.keepcoder\.Telegram|com\.teamspeak\.5\.client|com\.apple\.MobileSMS|com\.apple\.FaceTime|com\.fastmail\.mac\.Fastmail|ch\.protonmail\.desktop|com\.microsoft\.Outlook|com\.apple\.mail)$/, "comms"],
+  [/^(net\.whatsapp\.WhatsApp|us\.zoom\.xos|com\.microsoft\.teams2|com\.tinyspeck\.slackmacgap|com\.hnc\.Discord|org\.whispersystems\.signal-desktop|com\.tdesktop\.Telegram|ru\.keepcoder\.Telegram|com\.teamspeak\.5\.client|com\.apple\.MobileSMS|com\.apple\.FaceTime|com\.fastmail\.mac\.Fastmail|com\.microsoft\.Outlook|com\.apple\.mail)$/, "comms"],
 ];
 const roleOf = (bundle: string) => APPS.find(([re]) => re.test(bundle))?.[1];
 

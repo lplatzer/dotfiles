@@ -53,13 +53,6 @@ fetch_zip_app() {
 
 # ── All machines ─────────────────────────────────────────────────────────────
 
-# Vivaldi — Sparkle appcast for current version, then the vendor's versioned dmg
-if ! have_app "Vivaldi.app"; then
-  VIVALDI_VER=$(curl -fsSL "https://update.vivaldi.com/update/1.0/public/mac/appcast.xml" \
-    | grep -oE '<sparkle:version>[^<]+' | head -1 | sed 's/<sparkle:version>//')
-  fetch_dmg_app "https://downloads.vivaldi.com/stable/Vivaldi.${VIVALDI_VER}.universal.dmg" "Vivaldi.app"
-fi
-
 # Ollama — open source, GitHub's "latest" alias is stable and universal
 fetch_dmg_app "https://github.com/ollama/ollama/releases/latest/download/Ollama.dmg" "Ollama.app"
 
@@ -84,9 +77,6 @@ if ! have_app "AlDente.app"; then
     | grep "browser_download_url.*\.dmg" | cut -d'"' -f4 | head -1)
   fetch_dmg_app "$ALDENTE_URL" "AlDente.app"
 fi
-
-# ForkLift — vendor maintains a stable major-version zip alias, no resolve needed
-fetch_zip_app "https://download.binarynights.com/ForkLift/ForkLift4.zip" "ForkLift.app"
 
 # superwhisper — Sparkle appcast for the current build URL (bundle name is lowercase)
 if ! have_app "superwhisper.app"; then
