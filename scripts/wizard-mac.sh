@@ -336,8 +336,8 @@ pause
 
 # ── Keyboard layouts ─────────────────────────────────────────────────────────
 stage "Keyboard input sources"
-say "chezmoi put lplatzer-layout and EnDeu-Y-ISO in ~/Library/Keyboard Layouts."
-say "macOS lists them after the re-login in the last stage; add them then."
+say "chezmoi put lplatzer-layout in ~/Library/Keyboard Layouts."
+say "macOS lists it after the re-login in the last stage; add it then."
 step "After logging back in: System Settings → Keyboard → Input Sources → Edit → + → Others."
 open_url "x-apple.systempreferences:com.apple.Keyboard-Settings.extension"
 pause
