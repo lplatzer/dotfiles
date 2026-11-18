@@ -29,9 +29,6 @@ $RECYCLE.BIN/
 .cursor/
 .windsurf/
 
-# ── Editors — Zed ─────────────────────────────────────────────────────────────
-.zed/
-
 # ── Editors — Vim / Neovim ────────────────────────────────────────────────────
 *.swp
 *.swo
@@ -69,7 +66,6 @@ logs/
 npm-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-bun-error.log*
 
 # ── Runtime / temp ────────────────────────────────────────────────────────────
 *.orig

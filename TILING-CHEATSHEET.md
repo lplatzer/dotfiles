@@ -18,7 +18,7 @@ Config is chezmoi-managed: `~/.aerospace.toml`, `~/.config/hypr/`.
 
 | Action | Keys |
 |---|---|
-| New terminal (Ghostty) | `Hyper + Enter` |
+| Terminal (Rex) | `Hyper + Enter` |
 | Launcher | `Cmd/Super + Space` |
 
 ## Focus
@@ -79,8 +79,8 @@ Apps are sorted by role, and the arrangement follows the screens attached:
 | Workspace | Apps |
 |---|---|
 | 1 web and research | Zen, Chrome, Safari, Firefox, Arc, Obsidian |
-| 2 code | Rex, Cursor, VS Code, Zed, Xcode, JetBrains IDEs, Claude, Codex, ChatGPT |
-| 3 comms | WhatsApp, Zoom, Teams, Slack, Discord, Signal, Telegram, TeamSpeak, Messages, FaceTime, Fastmail, Proton Mail, Outlook, Mail |
+| 2 code | Rex, Cursor, VS Code, Xcode, JetBrains IDEs, Claude, Codex, ChatGPT |
+| 3 comms | WhatsApp, Zoom, Teams, Slack, Discord, Signal, Telegram, TeamSpeak, Messages, FaceTime, Fastmail, Outlook, Mail |
 | 4 VMs | VMware Fusion, Parallels, UTM, VirtualBox (main screen; with two externals the widest) |
 
 | Screens | Arrangement |
@@ -138,7 +138,7 @@ Enter with **`Hyper + Shift + ;`**, then:
 ## Notes
 
 - **Hyper = Ctrl+Alt+Cmd/Super on one thumb key.** It collides with nothing, so
-  Cmd/Alt stay fully native for app shortcuts and terminal/zellij keys.
+  Cmd/Alt stay fully native for app shortcuts and terminal keys.
 - Workspaces are numbered **1–10** on both machines for parity.
 - AeroSpace has no true dwindle/spiral layout (uses `tiles` + `accordion`).
 - Launcher tools: **Alfred** (macOS) / **walker** (Linux), both on the bare
@@ -146,50 +146,7 @@ Enter with **`Hyper + Shift + ;`**, then:
 
 ---
 
-# Terminal multiplexing — zellij
-
-Layering: **AeroSpace/Hyprland** tile *windows*, **zellij** multiplexes panes/tabs
-*inside one Ghostty window*. Auto-attaches on every new Ghostty. Raw shell (no
-zellij): `ZELLIJ_AUTO_ATTACH=false zsh`.
-
-Because the WM mod is now **Hyper**, `Alt` is free — zellij's quick keys all work:
-
-| Quick key (no mode) | Action |
-|---|---|
-| `Alt + N` | new pane |
-| `Alt + ←↑↓→` (or `Alt + H/J/K/L`) | focus pane |
-| `Alt + =` / `Alt + -` | grow / shrink |
-| `Alt + F` | toggle floating pane |
-| `Alt + [` / `Alt + ]` | prev / next layout |
-| `Alt + I` / `Alt + O` | move tab left / right |
-
-Mode system — press the `Ctrl` combo, then the key; `Enter`/`Esc` exits:
-
-| Mode | Enter | Then |
-|---|---|---|
-| Pane | `Ctrl + P` | `n` new · `d`/`r` split down/right · `x` close · `f` fullscreen · `w` float · `h/j/k/l` focus |
-| Tab | `Ctrl + T` | `n` new · `x` close · `1–9` goto · `h/l` prev/next · `r` rename · `b` break pane→tab |
-| Resize | `Ctrl + N` | `h/j/k/l` or `+`/`-` |
-| Scroll | `Ctrl + S` | `↑/↓` scroll · `s` search · `e` edit scrollback in `$EDITOR` |
-| Session | `Ctrl + O` | `w` session-manager · `d` detach · `c` config |
-| Move | `Ctrl + H` | `h/j/k/l` move pane |
-| Lock / Quit | `Ctrl + G` / `Ctrl + Q` | lock all keys / quit zellij |
-
-Sessions: `zellij ls` list · `zellij a <name>` attach · `Ctrl+O`→`d` detach ·
-`zellij --layout dev` start a layout. Sessions serialize (resume via `Ctrl+O`→`w`).
-
-# Project sessionizer (fzf + zoxide)
-
-| Action | Key / cmd |
-|---|---|
-| Pick a project → its zellij session | **`Ctrl + F`** (or run `sessionizer`) |
-| Candidates | both nvim configs + `~/projects/**` |
-| Per-project layout | auto-applies if `~/.config/zellij/layouts/<name>.kdl` exists |
-| **leitwerk** | opens `nvim` + `compose` tabs |
-
-Add a project layout: drop `~/.config/zellij/layouts/<projectname>.kdl`.
-
-# Jump & find (zoxide · fzf · atuin)
+# Jump & find (zoxide · fzf)
 
 | Action | Key / cmd |
 |---|---|
@@ -198,5 +155,5 @@ Add a project layout: drop `~/.config/zellij/layouts/<projectname>.kdl`.
 | Insert file path | `Ctrl + T` |
 | `cd` into subdir | `Alt + C` |
 | Fuzzy path completion | `<cmd> **<Tab>` |
-| History search | `Ctrl + R` (atuin) |
-| nvim (LazyVim) / kickstart | `nvim` / `vik` |
+| History search | `Ctrl + R` (fzf) |
+| nvim (LazyVim) / learning config | `nvim` / `vik` |

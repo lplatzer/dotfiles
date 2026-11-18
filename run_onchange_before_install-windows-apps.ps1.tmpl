@@ -1,0 +1,71 @@
+# Windows host apps (the Windows counterpart of install-brew + install-vendor-apps).
+# chezmoi re-runs this whenever its rendered content changes, which includes the
+# embedded winget configuration. Everything below checks before it installs, so a
+# rerun installs nothing new. Runs under Windows PowerShell 5.1 (see the ps1
+# interpreter in .chezmoi.toml.tmpl); failures warn and carry on.
+$ErrorActionPreference = 'Continue'
+$ProgressPreference = 'SilentlyContinue'   # Invoke-WebRequest is far slower with the progress bar
+
+# ── winget configure ────────────────────────────────────────────────────────
+# One UAC prompt at the start covers the packages marked securityContext: elevated.
+if (Get-Command winget -ErrorAction SilentlyContinue) {
+  $config = Join-Path $env:TEMP 'chezmoi-configuration.winget'
+  @'
+{{ includeTemplate "windows/configuration.winget" . }}
+'@ | Set-Content -Path $config -Encoding UTF8
+  winget configure --file $config --accept-configuration-agreements --disable-interactivity
+  if ($LASTEXITCODE -ne 0) {
+    Write-Warning "winget configure reported failures (exit $LASTEXITCODE). Rerun: winget configure --file `"$config`""
+  }
+} else {
+  Write-Warning 'winget is missing (App Installer). Install it from the Microsoft Store, then rerun chezmoi apply.'
+}
+
+# ── Vendor installers (no winget package) ──────────────────────────────────
+function Test-Installed([string]$Pattern) {
+  $keys = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*',
+          'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*',
+          'HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'
+  [bool](Get-ItemProperty $keys -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -like $Pattern })
+}
+
+function Install-Vendor([string]$Name, [string]$Pattern, [string]$Url, [string]$InstallerArgs) {
+  if (Test-Installed $Pattern) { return }
+  $exe = Join-Path $env:TEMP "$Name-setup.exe"
+  try {
+    Invoke-WebRequest -Uri $Url -OutFile $exe -UseBasicParsing
+    $p = Start-Process -FilePath $exe -ArgumentList $InstallerArgs -Wait -PassThru
+    if ($p.ExitCode -ne 0) { Write-Warning "$Name installer exited with $($p.ExitCode)" }
+  } catch {
+    Write-Warning "$Name install failed: $_"
+  } finally {
+    Remove-Item $exe -ErrorAction SilentlyContinue
+  }
+}
+
+$arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'aarch64' } else { 'x64' }
+# superwhisper: NSIS installer, /S is silent
+Install-Vendor 'superwhisper' '*superwhisper*' "https://api.superwhisper.com/download/windows/$arch" '/S'
+# Keymapp: Inno Setup installer
+Install-Vendor 'Keymapp' '*keymapp*' 'https://oryx.nyc3.cdn.digitaloceanspaces.com/keymapp/keymapp-latest.exe' '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART'
+
+# ── 0xProto Nerd Font (per user, no admin) ─────────────────────────────────
+$fontDir = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Fonts'
+if (-not (Test-Path (Join-Path $fontDir '0xProtoNerdFont-Regular.ttf'))) {
+  $zip = Join-Path $env:TEMP '0xProto.zip'
+  $unz = Join-Path $env:TEMP '0xProto'
+  try {
+    New-Item -ItemType Directory -Force -Path $fontDir | Out-Null
+    Invoke-WebRequest -Uri 'https://github.com/ryanoasis/nerd-fonts/releases/latest/download/0xProto.zip' -OutFile $zip -UseBasicParsing
+    Expand-Archive -Path $zip -DestinationPath $unz -Force
+    $reg = 'HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts'
+    Get-ChildItem -Path $unz -Filter '*.ttf' | ForEach-Object {
+      Copy-Item $_.FullName $fontDir -Force
+      New-ItemProperty -Path $reg -Name "$($_.BaseName) (TrueType)" -Value (Join-Path $fontDir $_.Name) -PropertyType String -Force | Out-Null
+    }
+  } catch {
+    Write-Warning "0xProto Nerd Font install failed: $_"
+  } finally {
+    Remove-Item $zip, $unz -Recurse -Force -ErrorAction SilentlyContinue
+  }
+}

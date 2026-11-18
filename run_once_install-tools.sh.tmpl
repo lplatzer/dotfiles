@@ -21,10 +21,30 @@ once() {
   "$@" && touch "$ONCE_DIR/$id"
 }
 
-# Declarative global runtime pin: skip the mise round-trip if already satisfied.
-mise_global() {
-  local spec="$1" tool="${1%%@*}"
-  mise ls --global 2>/dev/null | grep -q "^${tool}[[:space:]]" || mise use --global "$spec"
+# Global mise tools from ~/.config/mise/config.toml (chezmoi-managed, pinned; chezmoi
+# writes it before this script runs). Its hash makes chezmoi re-run this script when a
+# pin changes: {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
+mise_install() {
+  MISE_YES=1 mise install || echo "mise install reported failures — rerun: mise install" >&2
+  export PATH="${XDG_DATA_HOME:-$HOME/.local/share}/mise/shims:$PATH"
+}
+
+# Claude Code, Codex CLI and pnpm from their vendors' own installers, never npm -g.
+# Claude Code and Codex land in ~/.local/bin and update themselves; pnpm goes to
+# $PNPM_HOME (the same value .zshrc sets). Codex's installer only edits a shell
+# profile when ~/.local/bin isn't on PATH, and PNPM_NO_MODIFY_PATH keeps pnpm's out
+# of it, so the chezmoi-managed ~/.zshrc stays untouched. Called from both branches.
+vendor_clis() {
+  export PATH="$HOME/.local/bin:$PATH"
+  export PNPM_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/pnpm"
+  export PATH="$PNPM_HOME/bin:$PATH"
+
+  command -v claude >/dev/null 2>&1 || curl -fsSL https://claude.ai/install.sh | bash \
+    || echo "Claude Code install failed — rerun: curl -fsSL https://claude.ai/install.sh | bash" >&2
+  command -v codex >/dev/null 2>&1 || curl -fsSL https://chatgpt.com/codex/install.sh | sh \
+    || echo "Codex CLI install failed — rerun: curl -fsSL https://chatgpt.com/codex/install.sh | sh" >&2
+  command -v pnpm >/dev/null 2>&1 || curl -fsSL https://get.pnpm.io/install.sh | PNPM_NO_MODIFY_PATH=1 sh - \
+    || echo "pnpm install failed — rerun: curl -fsSL https://get.pnpm.io/install.sh | PNPM_NO_MODIFY_PATH=1 sh -" >&2
 }
 
 # ── macOS ────────────────────────────────────────────────────────────────────
@@ -32,57 +52,15 @@ mise_global() {
 # changes independently so edits here don't trigger a full brew bundle re-run).
 if [[ "$OS" == "Darwin" ]]; then
 
-  # mise: activate and install runtimes (mise installed via Brewfile)
-  eval "$(mise activate bash)"
-  mise_global node@lts
-  mise_global python@latest
-  mise_global zig@latest
+  export PATH="$HOME/.local/bin:$PATH"
 
-  # rustup: initialise stable toolchain so cargo is available
-  command -v rustup >/dev/null 2>&1 && rustup default stable 2>/dev/null || true
+  # mise — its own installer (~/.local/bin/mise; `mise self-update`). It only prints
+  # activation hints; ~/.zshrc already activates it. Then the pinned CLIs and runtimes.
+  command -v mise >/dev/null 2>&1 || curl -fsSL https://mise.run | sh \
+    || echo "mise install failed — rerun: curl -fsSL https://mise.run | sh" >&2
+  mise_install
 
-  # ty — Astral Python type checker / LSP (alpha), used by Neovim's basedpyright+ty setup
-  command -v ty >/dev/null 2>&1 || uv tool install ty
-
-  # bun
-  if ! command -v bun >/dev/null 2>&1; then
-    curl -fsSL https://bun.sh/install | bash
-  fi
-  export PATH="$HOME/.bun/bin:$PATH"
-
-  # Claude Code
-  command -v claude >/dev/null 2>&1 || bun install --global @anthropic-ai/claude-code
-
-  # Codex CLI (OpenAI)
-  command -v codex >/dev/null 2>&1 || npm install -g @openai/codex || echo "codex install failed — install manually" >&2
-
-  if [[ "$IS_PERSONAL" == "true" ]]; then
-    # OpenWhispr — no Homebrew cask; latest DMG from GitHub releases
-    if [[ ! -d "/Applications/OpenWhispr.app" ]]; then
-      OPENWHISPR_URL=$(curl -fsSL https://api.github.com/repos/OpenWhispr/openwhispr/releases/latest \
-        | grep "browser_download_url.*\.dmg" | cut -d'"' -f4 | head -1)
-      if [[ -n "$OPENWHISPR_URL" ]]; then
-        TMP=$(mktemp -d)
-        curl -fsSL "$OPENWHISPR_URL" -o "$TMP/OpenWhispr.dmg"
-        hdiutil attach "$TMP/OpenWhispr.dmg" -mountpoint "$TMP/mnt" -quiet
-        cp -R "$TMP/mnt/"*.app /Applications/
-        hdiutil detach "$TMP/mnt" -quiet
-        rm -rf "$TMP"
-        # Belt-and-suspenders: cp -R preserves xattrs, so if the mounted dmg carried
-        # com.apple.quarantine, the copied .app would too, triggering Gatekeeper's
-        # "downloaded from the internet" prompt on first launch.
-        xattr -dr com.apple.quarantine /Applications/OpenWhispr.app 2>/dev/null || true
-      fi
-    fi
-
-    # vllm (best-effort: upstream vllm releases can pin a torch version no
-    # longer on PyPI, which fails the build — don't let that abort the script)
-    command -v vllm >/dev/null 2>&1 || pip install vllm || echo "vllm install failed — install manually" >&2
-
-    # PAI — fill in your private repo URL and uncomment:
-    # PAI_REPO="git@github.com:YOUR_USERNAME/pai.git"
-    # [[ ! -d "$HOME/.claude" ]] && git clone "$PAI_REPO" "$HOME/.claude"
-  fi
+  vendor_clis
 
 # ── Arch Linux / CachyOS ─────────────────────────────────────────────────────
 elif command -v pacman >/dev/null 2>&1; then
@@ -93,14 +71,14 @@ elif command -v pacman >/dev/null 2>&1; then
 
   once pacman-syu -- sudo pacman -Syu --noconfirm
   sudo pacman -S --noconfirm --needed \
-    zsh ghostty git wget curl chezmoi mise \
-    zellij eza zoxide atuin starship vivid \
+    zsh git wget curl chezmoi mise \
+    eza zoxide starship \
     fzf fd ripgrep \
     neovim lazygit \
     luarocks imagemagick ghostscript \
     go rustup zig uv \
     python python-pip \
-    nodejs npm pnpm \
+    nodejs npm tree-sitter-cli \
     dotnet-sdk \
     uwsm \
     hyprland xdg-desktop-portal-hyprland wl-clipboard cliphist \
@@ -148,31 +126,10 @@ elif command -v pacman >/dev/null 2>&1; then
     command -v ty >/dev/null 2>&1 || uv tool install ty
   fi
 
-  # mise: install runtimes
-  if command -v mise >/dev/null 2>&1; then
-    eval "$(mise activate bash)" 2>/dev/null || true
-    mise_global node@lts
-    mise_global python@latest
-  fi
+  # mise (from pacman): the pinned runtimes in ~/.config/mise/config.toml
+  command -v mise >/dev/null 2>&1 && mise_install
 
-  if command -v npm >/dev/null 2>&1; then
-    command -v tree-sitter >/dev/null 2>&1 || sudo npm install -g tree-sitter-cli
-  fi
-
-  # bun
-  if ! command -v bun >/dev/null 2>&1; then
-    curl -fsSL https://bun.sh/install | bash
-  fi
-  export PATH="$HOME/.bun/bin:$PATH"
-
-  # Claude Code
-  command -v claude >/dev/null 2>&1 || bun install --global @anthropic-ai/claude-code
-
-  # Codex CLI
-  # if possible, move to bun in the future
-  if command -v npm >/dev/null 2>&1; then
-    command -v codex >/dev/null 2>&1 || sudo npm install -g @openai/codex || echo "codex install failed — install manually" >&2
-  fi
+  vendor_clis
 
   if [[ "$IS_PERSONAL" == "true" ]]; then
     # 1password-cli: chaotic-aur on CachyOS, otherwise manual
@@ -191,183 +148,6 @@ elif command -v pacman >/dev/null 2>&1; then
 
     # Ollama
     command -v ollama >/dev/null 2>&1 || curl -fsSL https://ollama.ai/install.sh | sh || echo "ollama install failed — install manually" >&2
-
-    # vllm
-    # Arch enforces PEP 668 according to claude code, so this would not run
-    # command -v vllm >/dev/null 2>&1 || pip install vllm
-
-    # PAI — fill in your private repo URL and uncomment:
-    # PAI_REPO="git@github.com:YOUR_USERNAME/pai.git"
-    # [[ ! -d "$HOME/.claude" ]] && git clone "$PAI_REPO" "$HOME/.claude"
-  fi
-
-# ── Debian / Ubuntu / WSL ────────────────────────────────────────────────────
-elif command -v apt-get >/dev/null 2>&1; then
-
-  export PATH="$HOME/.local/bin:$PATH"
-  mkdir -p "$HOME/.local/bin"
-
-  # Note: the Hyprland desktop (hyprland/walker/etc.) is intentionally NOT in this
-  # branch. CachyOS (pacman branch) is the graphical target; the apt branch covers
-  # Debian/Ubuntu/WSL, which are headless/server, and Debian's Hyprland lags badly.
-
-  once apt-update -- sudo apt-get update -qq
-  sudo apt-get install -y --no-install-recommends \
-    git wget curl build-essential gpg zsh \
-    fzf fd-find ripgrep \
-    neovim \
-    python3 python3-pip
-
-  # Wireshark — pre-answer the "allow non-root capture" prompt, then add user to group
-  if ! command -v wireshark >/dev/null 2>&1; then
-    echo "wireshark-common wireshark-common/install-setuid boolean true" \
-      | sudo debconf-set-selections
-    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y wireshark
-    sudo usermod -aG wireshark "$USER" 2>/dev/null || true
-  fi
-
-  # chezmoi (official installer — idempotent)
-  if ! command -v chezmoi >/dev/null 2>&1; then
-    sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"
-  fi
-
-  # fd ships as fd-find on Debian/Ubuntu; shim it
-  if ! command -v fd >/dev/null 2>&1 && command -v fdfind >/dev/null 2>&1; then
-    mkdir -p "$HOME/.local/bin"
-    ln -sf "$(which fdfind)" "$HOME/.local/bin/fd"
-  fi
-
-  # eza
-  if ! command -v eza >/dev/null 2>&1; then
-    wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc \
-      | sudo gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
-    echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" \
-      | sudo tee /etc/apt/sources.list.d/gierens.list
-    sudo chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list
-    sudo apt-get update -qq && sudo apt-get install -y eza
-  fi
-
-  # gh (GitHub CLI)
-  if ! command -v gh >/dev/null 2>&1; then
-    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
-      | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
-      | sudo tee /etc/apt/sources.list.d/github-cli.list
-    sudo apt-get update -qq && sudo apt-get install -y gh
-  fi
-
-  command -v starship >/dev/null 2>&1 || curl -fsSL https://starship.rs/install.sh | sh -s -- -y
-  command -v zoxide  >/dev/null 2>&1 || curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
-  command -v atuin   >/dev/null 2>&1 || curl -fsSL https://raw.githubusercontent.com/atuinsh/atuin/main/install.sh | bash
-
-  # zellij
-  if ! command -v zellij >/dev/null 2>&1; then
-    ZELLIJ_VER=$(curl -fsSL https://api.github.com/repos/zellij-org/zellij/releases/latest | grep tag_name | cut -d'"' -f4)
-    curl -fsSL "https://github.com/zellij-org/zellij/releases/download/${ZELLIJ_VER}/zellij-x86_64-unknown-linux-musl.tar.gz" \
-      | tar -xz -C "$HOME/.local/bin"
-  fi
-
-  # lazygit
-  if ! command -v lazygit >/dev/null 2>&1; then
-    LG_VER=$(curl -fsSL https://api.github.com/repos/jesseduffield/lazygit/releases/latest | grep tag_name | cut -d'"' -f4 | sed 's/v//')
-    curl -fsSL "https://github.com/jesseduffield/lazygit/releases/download/v${LG_VER}/lazygit_${LG_VER}_Linux_x86_64.tar.gz" \
-      | tar -xz -C "$HOME/.local/bin" lazygit
-  fi
-
-  # go
-  if ! command -v go >/dev/null 2>&1; then
-    GO_VER=$(curl -fsSL https://go.dev/dl/?mode=json | python3 -c "import sys,json;print(json.load(sys.stdin)[0]['version'])")
-    curl -fsSL "https://go.dev/dl/${GO_VER}.linux-amd64.tar.gz" | sudo tar -C /usr/local -xz
-    echo 'export PATH=$PATH:/usr/local/go/bin' >> "$HOME/.profile"
-  fi
-
-  # rustup
-  if ! command -v rustup >/dev/null 2>&1; then
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-    . "$HOME/.cargo/env"
-  fi
-
-  # mise
-  if ! command -v mise >/dev/null 2>&1; then
-    curl -fsSL https://mise.run | sh
-  fi
-  export PATH="$HOME/.local/bin:$PATH"
-  eval "$(mise activate bash)"
-  mise_global node@lts
-  mise_global python@latest
-  mise_global zig@latest
-  mise_global pnpm@latest
-  command -v tree-sitter >/dev/null 2>&1 || npm install -g tree-sitter-cli
-
-  # uv (Python package manager / project tool)
-  if ! command -v uv >/dev/null 2>&1; then
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-  fi
-
-  # ty — Astral Python type checker / LSP (alpha), used by Neovim's basedpyright+ty setup
-  command -v ty >/dev/null 2>&1 || uv tool install ty
-
-  # dotnet (LTS via install script)
-  if ! command -v dotnet >/dev/null 2>&1; then
-    curl -fsSL https://dot.net/v1/dotnet-install.sh \
-      | bash -s -- --channel LTS --install-dir "$HOME/.dotnet"
-    echo 'export DOTNET_ROOT="$HOME/.dotnet"' >> "$HOME/.profile"
-    echo 'export PATH="$PATH:$HOME/.dotnet"' >> "$HOME/.profile"
-    export DOTNET_ROOT="$HOME/.dotnet"
-    export PATH="$PATH:$HOME/.dotnet"
-  fi
-
-  # vivid
-  if ! command -v vivid >/dev/null 2>&1; then
-    VIVID_VER=$(curl -fsSL https://api.github.com/repos/sharkdp/vivid/releases/latest \
-      | grep tag_name | cut -d'"' -f4 | sed 's/v//')
-    curl -fsSL "https://github.com/sharkdp/vivid/releases/download/v${VIVID_VER}/vivid_${VIVID_VER}_amd64.deb" \
-      -o /tmp/vivid.deb
-    sudo dpkg -i /tmp/vivid.deb && rm /tmp/vivid.deb
-  fi
-
-  # Antidote
-  if [[ ! -d "$HOME/.antidote" ]]; then
-    git clone --depth=1 https://github.com/mattmc3/antidote.git "$HOME/.antidote"
-  fi
-
-  mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"
-  [[ "$SHELL" != "$(which zsh)" ]] && chsh -s "$(which zsh)" || true
-
-  # bun
-  if ! command -v bun >/dev/null 2>&1; then
-    curl -fsSL https://bun.sh/install | bash
-  fi
-  export PATH="$HOME/.bun/bin:$PATH"
-
-  # Claude Code
-  command -v claude >/dev/null 2>&1 || bun install --global @anthropic-ai/claude-code
-
-  # Codex CLI
-  command -v codex >/dev/null 2>&1 || npm install -g @openai/codex || echo "codex install failed — install manually" >&2
-
-  if [[ "$IS_PERSONAL" == "true" ]]; then
-    # 1Password CLI
-    if ! command -v op >/dev/null 2>&1; then
-      curl -fsSL https://downloads.1password.com/linux/keys/1password.asc \
-        | sudo gpg --dearmor -o /usr/share/keyrings/1password-archive-keyring.gpg
-      echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/$(dpkg --print-architecture) stable main" \
-        | sudo tee /etc/apt/sources.list.d/1password.list
-      sudo apt-get update -qq && sudo apt-get install -y 1password-cli
-    fi
-
-    # Ollama
-    command -v ollama >/dev/null 2>&1 || curl -fsSL https://ollama.ai/install.sh | sh || echo "ollama install failed — install manually" >&2
-
-    # GUI apps via snap (skipped on headless/WSL — no display server)
-    if command -v snap >/dev/null 2>&1 && [[ -n "${DISPLAY:-}" || -n "${WAYLAND_DISPLAY:-}" ]]; then
-      snap install signal-desktop telegram-desktop 2>/dev/null || true
-      snap install obsidian --classic 2>/dev/null || true
-    fi
-
-    # PAI — fill in your private repo URL and uncomment:
-    # PAI_REPO="git@github.com:YOUR_USERNAME/pai.git"
-    # [[ ! -d "$HOME/.claude" ]] && git clone "$PAI_REPO" "$HOME/.claude"
   fi
 
 else

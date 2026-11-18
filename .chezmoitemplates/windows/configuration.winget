@@ -1,0 +1,106 @@
+# yaml-language-server: $schema=https://aka.ms/configuration-dsc-schema/0.2
+#
+# Windows host apps, applied by run_onchange_before_install-windows-apps.ps1.tmpl with
+# `winget configure`. winget installers come from each vendor's own release location
+# (winget-pkgs submission rules). Not here: superwhisper and Keymapp (no winget
+# package; the script installs them from the vendor), Visual Studio (IT installs it),
+# Greenshot (company tool), Ollama (not on the work PC).
+properties:
+  configurationVersion: 0.2.0
+  resources:
+    # Browsers: Chrome is the main one, Zen the backup
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: chrome
+      directives:
+        description: Google Chrome
+        allowPrerelease: true
+        securityContext: elevated
+      settings:
+        id: Google.Chrome
+        source: winget
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: zen
+      directives:
+        description: Zen browser
+        allowPrerelease: true
+        securityContext: elevated
+      settings:
+        id: Zen-Team.Zen-Browser
+        source: winget
+
+    # Notes, AI apps, editor
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: obsidian
+      directives:
+        description: Obsidian
+        allowPrerelease: true
+      settings:
+        id: Obsidian.Obsidian
+        source: winget
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: claude
+      directives:
+        description: Claude desktop
+        allowPrerelease: true
+      settings:
+        id: Anthropic.Claude
+        source: winget
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: chatgpt
+      directives:
+        description: ChatGPT desktop (includes Codex); OpenAI ships it through the Store
+        allowPrerelease: true
+      settings:
+        id: 9PLM9XGG6VKS
+        source: msstore
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: vscode
+      directives:
+        description: Visual Studio Code
+        allowPrerelease: true
+      settings:
+        id: Microsoft.VisualStudioCode
+        source: winget
+
+    # Shell and desktop
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: windowsterminal
+      directives:
+        description: Windows Terminal (until Rex has a Windows build)
+        allowPrerelease: true
+      settings:
+        id: Microsoft.WindowsTerminal
+        source: winget
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: powertoys
+      directives:
+        description: PowerToys (Command Palette replaces Alfred)
+        allowPrerelease: true
+        securityContext: elevated
+      settings:
+        id: Microsoft.PowerToys
+        source: winget
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: glazewm
+      directives:
+        description: GlazeWM tiling window manager, config in ~/.glzr/glazewm
+        allowPrerelease: true
+        securityContext: elevated
+      settings:
+        id: glzr-io.glazewm
+        source: winget
+
+    # Input devices
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: logioptionsplus
+      directives:
+        description: Logi Options+
+        allowPrerelease: true
+        securityContext: elevated
+      settings:
+        id: Logitech.OptionsPlus
+        source: winget
+{{- if .is_personal }}
+
+    # Personal Windows machines: nothing yet (only the work PC runs Windows).
+{{- end }}

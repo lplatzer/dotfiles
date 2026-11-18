@@ -1,0 +1,49 @@
+# Global mise tools, pinned. Renovate bumps the versions; chezmoi re-runs
+# `mise install` when this file changes (its hash is in run_once_install-tools.sh.tmpl).
+# Not here, because they update themselves: mise, Claude Code, Codex CLI, pnpm.
+
+[tools]
+# Runtimes. On the Macs they live on the host until the NixOS dev VM takes over.
+node = "24.22.3"
+{{- if .is_personal }}
+python = "3.14.10"
+{{- else }}
+python = "3.13.18"
+{{- end }}
+{{- if eq .chezmoi.os "darwin" }}
+uv = "0.13.8"
+{{- if .is_personal }}
+rust = "1.100.0"
+go = "1.27.4"
+zig = "0.17.1"
+{{- else }}
+dotnet = "10.0.404"
+{{- end }}
+
+# Shell and CLI stack (Linux gets these from its package manager)
+chezmoi = "2.74.1"
+eza = "0.23.5"
+zoxide = "0.10.0"
+starship = "1.27.0"
+fzf = "0.75.0"
+fd = "10.5.2"
+ripgrep = "15.2.0"
+github-cli = "2.104.0"
+lazygit = "0.66.3"
+yazi = "26.9.1"
+"7zip" = "26.06"
+jq = "1.8.2"
+mas = "7.0.0"
+
+# Neovim and its helpers (the Brewfile has the preview libraries mise can't provide)
+neovim = "0.12.6"
+tree-sitter = "0.27.2"
+resvg = "0.50.0"
+"github:tectonic-typesetting/tectonic" = "0.17.0"
+ty = "0.0.104"
+{{- if .is_personal }}
+
+# 1Password CLI (personal machines only)
+1password = "2.42.0"
+{{- end }}
+{{- end }}

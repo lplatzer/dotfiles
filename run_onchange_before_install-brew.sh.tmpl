@@ -16,16 +16,21 @@ if ! command -v brew >/dev/null 2>&1; then
 fi
 
 # AeroSpace ships from a third-party tap; recent Homebrew refuses to load
-# its cask definition until the tap is explicitly trusted.
+# its cask definition until it is explicitly trusted. Tap first, so the trust
+# step has something to trust on a fresh machine.
+brew tap nikitabobko/tap 2>/dev/null || true
 brew trust --cask nikitabobko/tap/aerospace 2>/dev/null || true
 
-# Brewfile deployed to ~/Brewfile by chezmoi (rendered from Brewfile.tmpl).
+# The rendered Brewfile goes in on stdin: this is a before_ script, so on a fresh
+# machine ~/Brewfile doesn't exist yet when it runs.
 # --no-upgrade: install missing packages only; upgrades are run manually.
 # A cask's post-install pkg can need an interactive sudo prompt (no TTY when
 # chezmoi runs non-interactively) — warn instead of aborting so one stuck
 # cask doesn't block the rest of this script or later scripts.
-brew bundle --no-upgrade --file="$HOME/Brewfile" \
+brew bundle --no-upgrade --file=- <<'BREWFILE' \
   || echo "brew bundle reported failures — rerun 'brew bundle install --file=$HOME/Brewfile' in an interactive terminal to retry (e.g. a cask needing a sudo password prompt)" >&2
+{{ includeTemplate "Brewfile.tmpl" . }}
+BREWFILE
 
 # No background auto-upgrade: unattended cask upgrades fire sudo prompts with
 # no context. Upgrade by hand (`brew upgrade`) in a terminal.

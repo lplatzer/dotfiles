@@ -8,7 +8,7 @@
 # excluded so Shift stays free for the "move/shifted" variants below).
 # Emitted by a dedicated thumb key on the ZSA keyboard (QMK), so it's identical
 # on macOS and Linux and collides with nothing — no app uses Ctrl+Alt+Cmd, and
-# Cmd/Alt remain fully native for app shortcuts and terminal/zellij keys.
+# Cmd/Alt remain fully native for app shortcuts and terminal keys.
 #
 #   IMPORTANT (Oryx): map the thumb key to Left Ctrl + Left Alt + Left GUI.
 #   Do NOT use QMK's KC_HYPR — that includes Shift and would break move binds.
@@ -53,19 +53,20 @@ on-mode-changed = []
     outer.top        = 8
     outer.bottom     = 8
 
-# exec-* commands get AeroSpace's minimal PATH; add bun and ~/.local/bin.
+# exec-* commands get AeroSpace's minimal PATH; add ~/.local/bin and mise's shims
+# (aerospace-desk runs on mise's Node 24).
 [exec]
     inherit-env-vars = true
 [exec.env-vars]
-    PATH = '${HOME}/.local/bin:${HOME}/.bun/bin:/opt/homebrew/bin:${PATH}'
+    PATH = '${HOME}/.local/bin:${HOME}/.local/share/mise/shims:/opt/homebrew/bin:${PATH}'
 
 # ── main mode ────────────────────────────────────────────────────────────────
 # WM mod = cmd-alt-ctrl (Hyper). Shifted variants add shift.
 # Modifiers: cmd, alt, ctrl, shift. Commands: nikitabobko.github.io/AeroSpace/commands
 [mode.main.binding]
 
-    # Terminal (new Ghostty window).
-    cmd-alt-ctrl-enter = 'exec-and-forget open -na Ghostty'
+    # Terminal (Rex, by bundle id so the beta app name doesn't matter).
+    cmd-alt-ctrl-enter = 'exec-and-forget open -b com.superlogical.rex'
 
     # Window operations.
     cmd-alt-ctrl-q           = 'close'
