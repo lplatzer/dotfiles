@@ -39,9 +39,10 @@ install-rex.sh
 .config/mako
 {{ end }}
 
-# Windows host: no zsh, no Unix scripts (no interpreter for .sh), no nvim or mise on
-# the host (dev tooling lives in WSL)
+# Windows host: no zsh, no Unix scripts (no interpreter for .sh), no nvim, lazygit or
+# mise on the host (dev tooling lives in WSL)
 {{ if eq .chezmoi.os "windows" }}
+.config/lazygit
 .zshrc
 .zprofile
 .zsh_plugins.txt

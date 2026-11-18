@@ -1,0 +1,15 @@
+# lazygit config for macOS and Linux. On macOS lazygit looks in
+# ~/Library/Application Support/lazygit, which chezmoi symlinks to this file.
+# LazyVim's <leader>gg (snacks.nvim) loads this file and adds its colour theme on top.
+# Not deployed on Windows (no lazygit on the host; dev tooling lives in WSL).
+
+git:
+  # delta renders the diffs (installed by mise on macOS, pacman on Linux). Press | to
+  # cycle to the side-by-side entry. --{{colorScheme}} becomes --dark or --light to
+  # match the terminal. With --hyperlinks, clicking a line number opens that line in
+  # the editor (in LazyVim: the surrounding nvim). delta's --navigate doesn't work here.
+  diffRenderers:
+    - name: delta
+      command: 'delta --{{colorScheme}} --paging=never --line-numbers --hyperlinks --hyperlinks-file-link-format="lazygit-edit://{path}:{line}"'
+    - name: delta side-by-side
+      command: 'delta --{{colorScheme}} --paging=never --side-by-side --width={{width}}'
