@@ -11,7 +11,7 @@
 local mod = "CTRL ALT SUPER"
 
 -- ── Apps ─────────────────────────────────────────────────────────────────────
-hl.bind(mod .. " + Return", hl.dsp.exec_cmd("kitty"))
+hl.bind(mod .. " + Return", hl.dsp.exec_cmd("$HOME/.local/bin/rex"))
 hl.bind("SUPER + Space",    hl.dsp.exec_cmd("walker"))
 
 -- ── Window operations (mirror AeroSpace) ─────────────────────────────────────

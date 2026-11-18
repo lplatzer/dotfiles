@@ -18,7 +18,7 @@ Config is chezmoi-managed: `~/.aerospace.toml`, `~/.config/hypr/`.
 
 | Action | Keys |
 |---|---|
-| Terminal (Rex on macOS, kitty on Linux) | `Hyper + Enter` |
+| Terminal (Rex) | `Hyper + Enter` |
 | Launcher | `Cmd/Super + Space` |
 
 ## Focus
