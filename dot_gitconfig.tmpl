@@ -36,6 +36,17 @@
 [includeIf "hasconfig:remote.*.url:https://dev.azure.com/**"]
 	path = ~/.gitconfig-azure
 
+# Azure DevOps HTTPS with username (default clone URL: https://<org>@dev.azure.com/...)
+[includeIf "hasconfig:remote.*.url:https://*@dev.azure.com/**"]
+	path = ~/.gitconfig-azure
+
+# Azure DevOps SSH (current and legacy host)
+[includeIf "hasconfig:remote.*.url:git@ssh.dev.azure.com:v3/**"]
+	path = ~/.gitconfig-azure
+
+[includeIf "hasconfig:remote.*.url:*@vs-ssh.visualstudio.com:v3/**"]
+	path = ~/.gitconfig-azure
+
 [alias]
 	lg = log --oneline --graph --decorate --all
 	st = status -sb

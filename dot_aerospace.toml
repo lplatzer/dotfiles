@@ -20,7 +20,12 @@
 
 config-version = 2
 
-after-startup-command = []
+# aerospace-desk (~/.local/bin) sorts apps into role workspaces (1 web, 2 code,
+# 3 comms, 4 VMs) and adapts to the screens attached: separate workspaces on one
+# screen, web and code side by side on an ultrawide, one monitor each with two
+# externals. It keeps running to place new windows and to re-arrange when a
+# screen comes or goes; Hyper+A re-arranges by hand. Its app list is in the script.
+after-startup-command = ['exec-and-forget aerospace-desk watch']
 start-at-login = true
 
 enable-normalization-flatten-containers = true
@@ -48,6 +53,12 @@ on-mode-changed = []
     outer.top        = 8
     outer.bottom     = 8
 
+# exec-* commands get AeroSpace's minimal PATH; add bun and ~/.local/bin.
+[exec]
+    inherit-env-vars = true
+[exec.env-vars]
+    PATH = '${HOME}/.local/bin:${HOME}/.bun/bin:/opt/homebrew/bin:${PATH}'
+
 # ── main mode ────────────────────────────────────────────────────────────────
 # WM mod = cmd-alt-ctrl (Hyper). Shifted variants add shift.
 # Modifiers: cmd, alt, ctrl, shift. Commands: nikitabobko.github.io/AeroSpace/commands
@@ -66,6 +77,16 @@ on-mode-changed = []
     # (accordion is per-workspace runtime state, so a config reload won't undo it).
     cmd-alt-ctrl-slash = 'layout tiles horizontal vertical'
 
+    # Stack toggle, like a Hyprland group: the focused window's column (or the
+    # whole workspace) shows one window at a time; Hyper+J/K (or H/L) cycles.
+    # Press again for tiles. On 't', well away from '/'.
+    cmd-alt-ctrl-t = 'layout accordion tiles'
+
+    # Re-arrange by role for the screens attached (aerospace-desk). Plain A sorts
+    # workspaces 1-3 only, so windows you moved to 4-10 stay; Shift+A sorts those too.
+    cmd-alt-ctrl-a       = 'exec-and-forget aerospace-desk arrange'
+    cmd-alt-ctrl-shift-a = 'exec-and-forget aerospace-desk arrange --all'
+
     # Focus (vim h/j/k/l).
     cmd-alt-ctrl-h = 'focus left'
     cmd-alt-ctrl-j = 'focus down'
@@ -78,9 +99,30 @@ on-mode-changed = []
     cmd-alt-ctrl-shift-k = 'move up'
     cmd-alt-ctrl-shift-l = 'move right'
 
-    # Resize.
-    cmd-alt-ctrl-minus = 'resize smart -50'
-    cmd-alt-ctrl-equal = 'resize smart +50'
+    # Resize in steps. Hold the key to repeat. Shift resizes the other axis.
+    cmd-alt-ctrl-minus       = 'resize smart -100'
+    cmd-alt-ctrl-equal       = 'resize smart +100'
+    cmd-alt-ctrl-shift-minus = 'resize smart-opposite -100'
+    cmd-alt-ctrl-shift-equal = 'resize smart-opposite +100'
+
+    # Size presets: a fraction of the screen, so the same key gives the same
+    # split on the 49" ultrawide and on the MacBook screen. The bottom-left row
+    # grows from left to right: z 1/4, x 1/3, c 1/2, v 2/3, b 3/4 of the width.
+    # A lone window always fills the screen; these act once it has a neighbour,
+    # and only in tiles (a notification says so in accordion or floating).
+    cmd-alt-ctrl-z = 'exec-and-forget aerospace-desk size width 1/4'
+    cmd-alt-ctrl-x = 'exec-and-forget aerospace-desk size width 1/3'
+    cmd-alt-ctrl-c = 'exec-and-forget aerospace-desk size width 1/2'
+    cmd-alt-ctrl-v = 'exec-and-forget aerospace-desk size width 2/3'
+    cmd-alt-ctrl-b = 'exec-and-forget aerospace-desk size width 3/4'
+
+    # Even out all window sizes on the workspace.
+    cmd-alt-ctrl-e = 'balance-sizes'
+
+    # Monitors (MacBook screen next to the ultrawide): m focuses the next one,
+    # Shift+m sends the window there and follows it.
+    cmd-alt-ctrl-m       = 'focus-monitor --wrap-around next'
+    cmd-alt-ctrl-shift-m = 'move-node-to-monitor --wrap-around --focus-follows-window next'
 
     # Switch workspace.
     cmd-alt-ctrl-1 = 'workspace 1'
@@ -124,3 +166,26 @@ on-mode-changed = []
     cmd-alt-ctrl-shift-j = ['join-with down', 'mode main']
     cmd-alt-ctrl-shift-k = ['join-with up', 'mode main']
     cmd-alt-ctrl-shift-l = ['join-with right', 'mode main']
+
+# ── window rules ─────────────────────────────────────────────────────────────
+# Popups and utility windows float instead of taking a tile. Workspace routing
+# by app lives in aerospace-desk, because it depends on the screens attached.
+[[on-window-detected]]
+    if.app-id = 'com.superduper.superwhisper'
+    run = 'layout floating'
+
+[[on-window-detected]]
+    if.app-id = 'com.apple.systempreferences'
+    run = 'layout floating'
+
+[[on-window-detected]]
+    if.app-id = 'com.1password.1password'
+    run = 'layout floating'
+
+[[on-window-detected]]
+    if.app-id = 'at.obdev.littlesnitch.networkmonitor'
+    run = 'layout floating'
+
+[[on-window-detected]]
+    if.app-id = 'com.apple.ActivityMonitor'
+    run = 'layout floating'

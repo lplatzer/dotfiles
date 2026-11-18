@@ -40,15 +40,69 @@ Config is chezmoi-managed: `~/.aerospace.toml`, `~/.config/hypr/`.
 | Close window | `Hyper + Q` |
 | Fullscreen | `Hyper + F` |
 | Toggle floating / tiling | `Hyper + Shift + Space` |
-| Shrink / grow | `Hyper + -` / `Hyper + =` |
-| Drag to move / resize | hold `Hyper` + left / right mouse |
+| Shrink / grow (hold to repeat) | `Hyper + -` / `Hyper + =` |
+| Shrink / grow the other axis (macOS) | `Hyper + Shift + -` / `Hyper + Shift + =` |
+| Drag to move | macOS: `Ctrl + Cmd` + drag anywhere in the window (needs a re-login once); Linux: `Hyper` + left mouse |
+| Drag to resize | macOS: drag the edge between two tiles; Linux: `Hyper` + right mouse |
+
+## Sizes (macOS)
+
+Fractions of the screen, so a key gives the same split on the 49" ultrawide and
+the MacBook screen. A lone window always fills the screen; these act once it
+has a neighbour in its row, and only in tiles (a notification says so otherwise).
+Helper: `aerospace-desk size`.
+
+| Width of the focused window | Keys |
+|---|---|
+| 1/4 · 1/3 · 1/2 · 2/3 · 3/4 | `Hyper + Z` · `X` · `C` · `V` · `B` |
+| Even out all windows | `Hyper + E` |
+
+## Monitors (macOS)
+
+| Action | Keys |
+|---|---|
+| Focus next monitor | `Hyper + M` |
+| Move window to next monitor (and follow) | `Hyper + Shift + M` |
 
 ## Layout
 
 | Action | macOS (AeroSpace) | Linux (Hyprland) |
 |---|---|---|
-| Toggle split orientation | `Hyper + /` | `Hyper + /` (togglesplit) |
-| Accordion / pseudotile | `Hyper + ,` | `Hyper + ,` (pseudo) |
+| Toggle split orientation | `Hyper + /` (also leaves accordion) | `Hyper + /` (togglesplit) |
+| Accordion / pseudotile | unbound (too easy to hit by mistake) | `Hyper + ,` (pseudo) |
+| Stack toggle (like a group) | `Hyper + T`: the column shows one window at a time, `Hyper + J/K` cycles | — |
+
+## Role workspaces (macOS, aerospace-desk)
+
+Apps are sorted by role, and the arrangement follows the screens attached:
+
+| Workspace | Apps |
+|---|---|
+| 1 web and research | Zen, Chrome, Safari, Firefox, Arc, Obsidian |
+| 2 code | Rex, Cursor, VS Code, Zed, Xcode, JetBrains IDEs, Claude, Codex, ChatGPT |
+| 3 comms | WhatsApp, Zoom, Teams, Slack, Discord, Signal, Telegram, TeamSpeak, Messages, FaceTime, Fastmail, Proton Mail, Outlook, Mail |
+| 4 VMs | VMware Fusion, Parallels, UTM, VirtualBox (main screen; with two externals the widest) |
+
+| Screens | Arrangement |
+|---|---|
+| MacBook alone, one regular monitor, or MacBook + one regular monitor | web on 1, code on 2 (`Hyper + Tab` flips between them); comms on the MacBook screen when it is open. Single-role workspaces stack (accordion) |
+| An ultrawide (21:9 or wider: G9, 34") | web and code side by side on **2**: web 30% · code 40% · AI 30% on 32:9; web ⅓ · code + AI stacked ⅔ on 21:9. Workspace 1 stays empty |
+| Two or more external monitors | web on one monitor, code on the widest, comms on the MacBook or a third monitor |
+
+New windows of these apps go to their workspace by themselves (a Zoom or Teams meeting takes you to
+3); plugging a screen in or out re-arranges after a few seconds. Terminals stay where you open them;
+floating windows are left alone.
+
+**Workspaces 4–10 are yours:** a window you move there (Zen next to the VM, say) stays until you
+press `Hyper + Shift + A`. A new window opened next to one of the same role (Cmd+N in Zen on 4) stays
+too. Only windows on 1–3 are re-sorted at login, on screen changes and with `Hyper + A`.
+
+| Action | Keys |
+|---|---|
+| Re-sort workspaces 1–3 by role | `Hyper + A` |
+| Re-sort everything, including what you moved to 4–10 | `Hyper + Shift + A` |
+
+The app list lives in `~/.local/bin/aerospace-desk`; log in `~/Library/Logs/aerospace-desk.log`.
 
 ## Workspaces
 

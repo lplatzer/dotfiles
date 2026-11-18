@@ -2,6 +2,13 @@
 Plans/
 docs/
 
+# Repo docs — not deployed to home directory
+README.md
+AGENTS.md
+# Repo-scoped agent rules: deploying them to ~/CLAUDE.md would load them into
+# every Claude Code session under $HOME, not just sessions in this repo.
+CLAUDE.md
+
 # PowerShell install script — Windows only
 {{ if ne .chezmoi.os "windows" -}}
 install-tools.ps1
@@ -12,6 +19,7 @@ install-tools.ps1
 Brewfile
 .config/linearmouse
 .aerospace.toml
+.local/bin/aerospace-desk
 {{ end }}
 
 # Linux-only configs — skip on macOS/Windows

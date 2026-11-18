@@ -14,6 +14,10 @@ fi
 defaults write com.apple.dock autohide-delay -float 0
 defaults write com.apple.dock autohide-time-modifier -float 0
 
+# Windows: Ctrl+Cmd + drag anywhere in a window moves it (like Hyprland's mod+drag).
+# AeroSpace re-tiles a tiled window where it is dropped.
+defaults write NSGlobalDomain NSWindowShouldDragOnGesture -bool true
+
 # Finder
 defaults write com.apple.finder AppleShowAllFiles true
 defaults write com.apple.finder ShowPathbar -bool true
@@ -40,5 +44,12 @@ defaults write NSGlobalDomain NSAutomaticTextCompletionEnabled -bool false
 # Stop Photos opening on device connect
 defaults -currentHost write com.apple.ImageCapture disableHotPlug -bool true
 
-# Apply dock changes
-killall Dock
+# Apply dock changes. This script re-runs whenever its contents change (chezmoi
+# keys run_once_ on the script hash), and every `defaults write` above is
+# idempotent — but killall Dock is not: it blanks the Dock mid-session for no
+# reason on a repeat apply. Only restart the Dock the first time.
+ONCE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/chezmoi-once"
+mkdir -p "$ONCE_DIR"
+if [[ ! -e "$ONCE_DIR/dock-restart" ]]; then
+  killall Dock && touch "$ONCE_DIR/dock-restart"
+fi
