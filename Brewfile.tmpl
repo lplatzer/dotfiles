@@ -1,86 +1,14 @@
-# ── Dotfiles & shell ─────────────────────────────────────────────────────────
-brew "chezmoi"
-brew "antidote"
-brew "eza"
-brew "zoxide"
-brew "starship"
+# Homebrew only for what has no vendor installer: the nvim preview libraries (no
+# macOS binaries upstream) and AeroSpace (its vendor-preferred tap; the GitHub
+# releases are all prereleases). CLIs come from mise (~/.config/mise/config.toml),
+# GUI apps from run_once_install-vendor-apps.sh.tmpl.
+tap "nikitabobko/tap"
 
-# ── Core CLI ─────────────────────────────────────────────────────────────────
-brew "git"
-brew "gh"
 brew "wget"
-brew "fzf"
-brew "fd"
-brew "ripgrep"
-brew "lazygit"
-brew "tree-sitter-cli"
-brew "mas"
-brew "yazi"
-brew "sevenzip"
-brew "jq"
-
-# ── Editor deps (LazyVim) ────────────────────────────────────────────────────
-brew "neovim"
 brew "luarocks"
 brew "imagemagick"
-# imagemagick-full: keg-only superset (extra codecs); kept alongside plain
-# imagemagick since other formulae depend on that name specifically.
-# Not on PATH by default — see `brew info imagemagick-full` for the PATH caveat.
-brew "imagemagick-full"
 brew "ghostscript"
-brew "tectonic"
 brew "poppler"
-brew "resvg"
-brew "ffmpeg-full"
+brew "ffmpeg"
 
-# ── Dev tools ────────────────────────────────────────────────────────────────
-brew "mise"
-brew "go"
-brew "rustup"
-brew "zig"
-brew "uv"
-brew "dotnet"
-
-# ── macOS apps — all machines ────────────────────────────────────────────────
-cask "alfred"
-cask "swish"
-cask "dockdoor"
-cask "linearmouse"
 cask "nikitabobko/tap/aerospace"
-cask "istat-menus"
-cask "wireshark-app"
-# Bartender, CleanShot X, AlDente, Ollama, Claude, superwhisper,
-# Obsidian: moved to direct vendor-fetch install, see run_once_install-vendor-apps.sh.tmpl
-
-# ── Fonts ────────────────────────────────────────────────────────────────────
-cask "font-0xproto-nerd-font"
-
-# ── Personal machines only ───────────────────────────────────────────────────
-{{ if .is_personal }}
-# Credentials & privacy (work machines use manual SSH keys instead)
-cask "1password-cli"
-# 1Password: moved to direct vendor-fetch install (security-sensitive; vendor states
-# the Mac app is officially available only from their own site), see
-# run_once_install-vendor-apps.sh.tmpl
-# Little Snitch: stays a Homebrew cask — no unattended vendor-fetch path exists;
-# it ships as an installer app requiring interactive system-extension approval +
-# reboot, so cp -R into /Applications would produce a non-working install.
-cask "little-snitch"
-
-# Creative & productivity
-# JetBrains Toolbox, Figma, Notion: moved to direct vendor-fetch install,
-# see run_once_install-vendor-apps.sh.tmpl
-cask "affinity-designer"
-cask "affinity-photo"
-cask "affinity-publisher"
-mas "Shapr3D", id: 1091675654
-
-# Communication
-mas "WhatsApp Messenger", id: 310633997
-mas "Telegram", id: 747648890
-# Signal: moved to direct vendor-fetch install (no Mac App Store build exists),
-# see run_once_install-vendor-apps.sh.tmpl
-
-# Media
-# Qobuz: moved to direct vendor-fetch install, see run_once_install-vendor-apps.sh.tmpl
-{{ end }}
