@@ -162,8 +162,8 @@ Pause-Step
 
 # ── 8. Keyboard layouts ────────────────────────────────────────────────────
 Stage 'Keyboard layouts'
-Say 'The MSKLC-built installers for lplatzer-layout and EnDeu-Y-ISO come from WS-29,'
-Say 'which has not delivered them yet. Once it has, the Windows host script runs them.'
+Say 'The MSKLC-built installer for lplatzer-us-umlaut comes from WS-29,'
+Say 'which has not delivered it yet. Once it has, the Windows host script runs it.'
 Note 'Until then: nothing to do here.'
 Pause-Step
 
