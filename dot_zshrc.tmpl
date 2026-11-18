@@ -10,9 +10,9 @@ fi
 # PATH
 export PATH="$HOME/.local/bin:$PATH"
 
-# bun
-export PATH="$HOME/.bun/bin:$PATH"
-[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"   # completions
+# pnpm (its own installer; global CLIs from `pnpm add -g` land in $PNPM_HOME/bin)
+export PNPM_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/pnpm"
+export PATH="$PNPM_HOME/bin:$PATH"
 
 # mise (version manager — node, python, ruby, etc.)
 command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"
